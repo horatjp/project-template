@@ -1,0 +1,41 @@
+name: Check blocked issue dependencies
+
+# Issueのclose/reopenのたびに、blocked/todoのラベル状態を依存関係と同期する。
+# - closed:   依存が全て解消したblocked Issueを todo に付け替える
+# - reopened: 再オープンされたIssueに依存するtodo Issueを blocked に戻す
+# cronでの定期実行(scripts/check-blocked.sh)の代わりに、イベント駆動でリアルタイムに動かしたい場合に使う。
+# 両方併用してもよい(cronはActionsが落ちた時のフォールバックになる)。
+# check-blocked.shは冪等なので、二重実行してもラベルが壊れることはない。
+#
+# セキュリティメモ:
+# - GITHUB_TOKENによるラベル編集・コメントは新しいworkflowをトリガーしないため、
+#   再帰実行(無限ループ)は起きない。トリガーをlabeled等に広げる場合やPATに
+#   差し替える場合は再帰の可能性を再評価すること。
+# - Issue本文はcheck-blocked.sh内でパターン抽出のみに使い、evalや変数展開による
+#   コマンド実行は行わない。Issue番号はgh CLIのJSON出力からのみ取得する。
+
+on:
+  issues:
+    types: [closed, reopened]
+
+permissions:
+  issues: write
+  contents: read   # actions/checkout に必要(明示しないとプライベートリポジトリで失敗する)
+
+concurrency:
+  group: check-blocked-dependencies
+  cancel-in-progress: false
+
+jobs:
+  check-unblock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run dependency check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x ./scripts/check-blocked.sh
+          ./scripts/check-blocked.sh

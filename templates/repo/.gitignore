@@ -1,0 +1,8 @@
+.DS_Store
+
+# 認証情報は置かない(防御的に除外)
+.env
+.env.*
+!.env.example
+
+# プロジェクトのスタックに合わせて追記する(例: node_modules/, dist/, vendor/)

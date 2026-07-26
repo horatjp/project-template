@@ -1,0 +1,13 @@
+.DS_Store
+
+# 認証情報は置かない(防御的に除外)
+.env
+.env.*
+!.env.example
+
+# repos/ 配下の各リポジトリは独立した git で管理する(ワークスペースには含めない)
+repos/*
+!repos/.gitkeep
+
+# 公開しないローカルアーカイブ
+_archive/
