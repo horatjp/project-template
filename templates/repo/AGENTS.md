@@ -12,8 +12,9 @@
    `_template.md` は除く)・`docs/` の生きた文書(requirements.md・schema.md 等)を
    ファイル名と description で走査し、関係するものを読む
 4. 関連ファイルだけを読む。全読みしない
-5. `status: deprecated`・`stale_after` 超過の記録は判断根拠にしない。`draft` や未検証
-   (`verified` なし)の記録は参考扱いとし、重要な判断の根拠にする前に検証する
+5. `status: deprecated`・`stale_after` 超過の記録は判断根拠にしない(超過を見つけたら
+   更新か deprecated 化を提案する)。`draft` や未検証(`verified` なし)の記録は
+   参考扱いとし、重要な判断の根拠にする前に検証する
 6. `docs/` に不備(リンク切れ・欠けたフィールド)があっても読み取りを止めない。
    読める範囲を読み、問題は修正提案として報告する
 
