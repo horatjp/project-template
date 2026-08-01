@@ -1,0 +1,19 @@
+// 汎用 devcontainer — スタック非依存の最小構成(使い方は同ディレクトリの README)
+// スタック確定後は features を追記して育てる(README のカスタマイズ例参照)
+{
+  "name": "project-workspace",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  // AI CLI のログイン情報・設定を named volume に置き、rebuild 後も保持する
+  "mounts": [
+    "source=claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=codex-config-${devcontainerId},target=/home/vscode/.codex,type=volume"
+  ],
+  // volume は初回 root 所有で作られるため chown が必要。Codex CLI は feature が無いので npm で入れる
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.codex && npm install -g @openai/codex",
+  "remoteUser": "vscode"
+}

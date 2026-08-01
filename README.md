@@ -67,6 +67,7 @@ project-workspace/
 │   └── decisions/         #   事業・運営判断の決定記録(リポジトリ層と同じOKF互換書式)
 ├── materials/             # ファイル原本+AI可読の変換版(方法は同README)
 ├── .claude/skills/        # ワークスペース共有スキル(README 参照)
+├── .devcontainer/         # 汎用開発コンテナ(コンテナ運用しない場合は無視してよい。同README参照)
 ├── repos/                 # コードリポジトリ置き場(git 管理外。各リポジトリが独立した git)
 └── templates/
     ├── modules/
