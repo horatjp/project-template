@@ -4,7 +4,7 @@
 2026年時点のAIエージェント開発のベストプラクティス調査に基づいて設計し、
 模擬プロジェクトのドライランで検証している。
 
-Claude Code / Codex CLI / Gemini CLI など、AGENTS.md 系の指示ファイルを読む
+Claude Code / Codex CLI など、AGENTS.md 系の指示ファイルを読む
 CLIコーディングAI全般に対応する。
 
 ## 設計思想
@@ -60,7 +60,7 @@ actor 表記(`agent:<tool>@<role>` / `human:<id>`)と日付(YYYY-MM-DD)は OKF �
 ```
 project-workspace/
 ├── AGENTS.md              # ワークスペース層の運用ルール(まず読む)
-├── CLAUDE.md / GEMINI.md  # → AGENTS.md への symlink(Claude Code / Gemini CLI 用)
+├── CLAUDE.md              # → AGENTS.md への symlink(Claude Code 用)
 ├── STATUS.md              # 現在地(進行中・open な宿題・次の一手)
 ├── journal/               # 時系列ログ: 日誌・議事録(YYYY-MM-DD.md、追記専用。ため方は同README)
 ├── docs/                  # 主題別の生きた文書(要件・関係者情報など)
@@ -73,7 +73,7 @@ project-workspace/
     ├── modules/
     │   └── multi-agent/   # 追加モジュール: Issue駆動の並列実行(必要になったら導入。同README参照)
     └── repo/              # リポジトリ層テンプレート(repos/ に新規リポジトリを作るときコピー)
-        ├── AGENTS.md      # 正典。100行以下を維持(+ CLAUDE.md / GEMINI.md symlink)
+        ├── AGENTS.md      # 正典。100行以下を維持(+ CLAUDE.md symlink)
         ├── changes/       # 変更スペック(大きい変更のみ proposal → design → tasks)
         ├── scripts/       # hooks 用スクリプト(承認ゲートの参照実装)
         ├── docs/
@@ -154,10 +154,15 @@ PreToolUse フック(ドライランで、指示だけではこのゲートが�
 
 スタックが決まったら、フォーマット・lint・テストゲートも同様に hooks 化する。
 
-**対応CLIの注意**: hooks・`.claude/rules/`・`.claude/skills/` は Claude Code の機構。
-Codex CLI / Gemini CLI はこれらを読まないため、すべてのCLIに守らせたい規範は
-AGENTS.md 本文に書く(または各CLIの同等機構に複製する)。Gemini CLI の既定コンテキスト
-ファイルは `GEMINI.md` のため、`AGENTS.md` への symlink を両層に同梱している。
+**Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読むため、追加設定なしで
+両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
+Claude Code の機構で、Codex は読まない:
+
+- スキル(hearing / lens-review)は「`.claude/skills/<name>/SKILL.md` を読んで
+  その方法論で進めて」と指示すれば同等に使える(自動起動しないだけ)
+- 承認ゲート hook は効かないため、スペック必須の変更を Codex に任せる場合は
+  承認欄の確認を人間が行う
+- すべてのCLIに守らせたい規範は AGENTS.md 本文に書く(hooks や rules に置かない)
 
 ## 運用の要点
 

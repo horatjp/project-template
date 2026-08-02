@@ -24,8 +24,6 @@ VS Code で「Reopen in Container」(または `devcontainer up`)で起動する
 - Docker(テスト用DB等をコンテナ内から起動): `"ghcr.io/devcontainers/features/docker-in-docker:2": {}`
 - DB 常駐が必要になったら `docker-compose.yml` 方式に移行する(devcontainer の
   `dockerComposeFile` 指定。Compose の型はリポジトリ層 `test-deploy` 規約の VPS 節参照)
-- Gemini CLI も使う場合: postCreateCommand に `npm install -g @google/gemini-cli` を追加し、
-  `~/.gemini` の volume mount を1行足す
 
 特定リポジトリだけ重い環境が必要になったら、そのリポジトリ側に個別の
 `.devcontainer/` を作って分離する(このファイルをコピーして育てればよい)。
