@@ -127,32 +127,21 @@ ln -s ../../../../.claude/skills/<skill-name> repos/<repo>/.claude/skills/<skill
 この symlink はワークスペース内でのみ解決される。リポジトリを単体で clone・配布すると
 dangling になるため、リポジトリ側 `.gitignore` で除外するか、単体配布時はコピーに置き換える。
 
-## hooks の設定(推奨)
+## hooks — 承認ゲート(同梱済み・既定で有効)
 
 機械的に強制したいルールは AGENTS.md に書かず hooks にする(AGENTS.md の指示は
-アドバイザリだが、hooks は確実に実行される)。最初に置くべき例は**承認ゲート** —
+アドバイザリだが、hooks は確実に実行される)。最初の例が**承認ゲート** —
 proposal の承認チェックが未記入のまま design.md / tasks.md を書こうとしたらブロックする
 PreToolUse フック(ドライランで、指示だけではこのゲートが素通りできることを確認済み)。
-参照実装を `templates/repo/scripts/check-proposal-approved.sh` に同梱している。
-リポジトリの `.claude/settings.json` に次を書く:
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/check-proposal-approved.sh" }]
-      }
-    ]
-  }
-}
-```
+`templates/repo/.claude/settings.json` に設定済みで、`scripts/check-proposal-approved.sh` と
+あわせてリポジトリ作成時からそのまま動く(追加の設定は不要。初回セッションで hooks の
+実行許可を求められたら内容を確認して許可する)。スクリプトは `changes/*/design.md`・
+`tasks.md` への書き込みだけを検査し、対象外のパスは exit 0 で通す
+(ブロックは exit 2 — stderr がそのままAIへのフィードバックになる)。
 
-(スクリプトは `changes/*/design.md`・`tasks.md` への書き込みだけを検査し、対象外の
-パスは exit 0 で通す。ブロックは exit 2 — stderr がそのままAIへのフィードバックになる)
-
-スタックが決まったら、フォーマット・lint・テストゲートも同様に hooks 化する。
+スタックが決まったら、フォーマット・lint・テストゲートも同様に
+`.claude/settings.json` へ追記して hooks 化する。
 
 **Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読むため、追加設定なしで
 両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
