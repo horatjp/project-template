@@ -107,6 +107,7 @@ cd my-project
 mkdir -p repos/my-app && cp -R templates/repo/. repos/my-app/
 cd repos/my-app
 git init
+git add -A && git commit -m "init: リポジトリ層テンプレートを展開"  # ロールバック地点を最初に作る
 # スタックが決まったら .gitignore に依存・生成物・キャッシュ等を追記する
 ```
 

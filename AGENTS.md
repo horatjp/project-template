@@ -35,6 +35,7 @@
 | 受領・作成したファイル | `materials/` に `YYYY-MM-DD-<topic>.<ext>`(journal からリンクし、出所を1行残す。PDF等は受領時にAI可読の同名 `.md` を併置 — 方法は `materials/README.md`) |
 | リポジトリ横断・事業側の要件(`docs/requirements.md`)・関係者情報 | `docs/`(生きた文書として上書き更新。frontmatter 不要) |
 | 技術的な決定・失敗の学び・変更スペック | 該当リポジトリの `docs/`・`changes/` |
+| `repos/` 配下の節目(実装完了・レビュー完了など) | `journal/` に1行(リポジトリ側の記録へリンク。詳細はリポジトリ側) |
 
 `docs/decisions/` の読み書きは各リポジトリと同じルール(OKF互換 frontmatter・verified の
 自己検証禁止・deprecated と stale_after 超過は判断根拠にしない・不備があっても止めず報告)。
