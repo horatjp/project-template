@@ -7,14 +7,29 @@ Claude Code + Codex CLI が使える最小構成を恒久の既定とする。�
 VS Code で「Reopen in Container」(または `devcontainer up`)で起動する。
 コンテナを使わない運用なら、このディレクトリは無視してよい(害はない)。
 
-## 初回セットアップと永続化
+## 初回セットアップ
 
-- `claude` / `codex` の**ログインは初回のみ**。`~/.claude`・`~/.codex` を named volume に
-  置いているため、rebuild してもログイン・設定・メモリは残る
-  (完全に消すには `docker volume rm`)
+- コンテナ内で `claude` / `codex` を起動してログインする。コンテナ内の `~/.claude`・
+  `~/.codex` はホストとは別物なので、ホスト側のローカル環境には影響しない
+- 既定では **rebuild するとログイン・設定は消える**(再ログインすればよい)。
+  残したい場合は `devcontainer.json` に named volume を追記する:
+
+  ```jsonc
+  "mounts": [
+    "source=claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=codex-config-${devcontainerId},target=/home/vscode/.codex,type=volume"
+  ],
+  // volume は初回 root 所有で作られるため postCreateCommand の先頭に chown を足す:
+  // sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.codex && ...
+  ```
+
 - **ユーザースキルの復元**: コンテナ内の `~/.claude/skills` はまっさらになる。
   dotfiles でスキルを管理している場合、VS Code の設定
   `"dotfiles.repository": "<user>/dotfiles"` を入れておくと全コンテナに自動適用される
+- **Codex のサンドボックス**: コンテナ内では bubblewrap が user namespace を作れず
+  起動しないことがある(ドライランで確認)。コンテナ自体が隔離境界なので、その場合は
+  サンドボックス無しで実行する(`codex --sandbox danger-full-access`、または
+  `~/.codex/config.toml` で設定)
 
 ## スタックが決まったら
 
