@@ -144,6 +144,9 @@ PreToolUse フック(ドライランで、指示だけではこのゲートが�
 実行許可を求められたら内容を確認して許可する)。スクリプトは `changes/*/design.md`・
 `tasks.md` への書き込みだけを検査し、対象外のパスは exit 0 で通す
 (ブロックは exit 2 — stderr がそのままAIへのフィードバックになる)。
+hooks は起動ディレクトリの settings しか読まれないため、ワークスペース直下で開いた
+セッションが `repos/` 配下を編集するケースに備え、ワークスペース層
+(`.claude/settings.json` + `scripts/`)にも同じゲートを同梱している。
 
 スタックが決まったら、フォーマット・lint・テストゲートも同様に
 `.claude/settings.json` へ追記して hooks 化する。
