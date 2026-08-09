@@ -67,6 +67,7 @@ project-workspace/
 │   └── decisions/         #   事業・運営判断の決定記録(リポジトリ層と同じOKF互換書式)
 ├── materials/             # ファイル原本+AI可読の変換版(方法は同README)
 ├── .claude/skills/        # ワークスペース共有スキル(README 参照)
+├── scripts/               # hooks 用スクリプト(承認ゲート・シークレット検出。設定は .claude/settings.json)
 ├── .devcontainer/         # 汎用開発コンテナ(コンテナ運用しない場合は無視してよい。同README参照)
 ├── repos/                 # コードリポジトリ置き場(git 管理外。各リポジトリが独立した git)
 └── templates/
@@ -75,7 +76,7 @@ project-workspace/
     └── repo/              # リポジトリ層テンプレート(repos/ に新規リポジトリを作るときコピー)
         ├── AGENTS.md      # 正典。100行以下を維持(+ CLAUDE.md symlink)
         ├── changes/       # 変更スペック(大きい変更のみ proposal → design → tasks)
-        ├── scripts/       # hooks 用スクリプト(承認ゲートの参照実装)
+        ├── scripts/       # hooks 用スクリプト(承認ゲート・シークレット検出)
         ├── docs/
         │   ├── STATUS.md      # 現在地(毎セッション必読)
         │   ├── learnings.md   # 失敗と学び(毎セッション必読・100行上限)
@@ -83,6 +84,7 @@ project-workspace/
         │   ├── decisions/     # 決定記録=「なぜ」の記録
         │   └── knowledge/     # 技術調査・バグ解決・一次資料
         └── .claude/
+            ├── settings.json  # hooks 設定(既定で有効)
             ├── rules/     # パス限定の規約(該当ファイルを触る時のみロード)
             └── skills/    # リポジトリ固有の手順スキル
 ```
@@ -132,10 +134,10 @@ ln -s ../../../../.claude/skills/<skill-name> repos/<repo>/.claude/skills/<skill
 この symlink はワークスペース内でのみ解決される。リポジトリを単体で clone・配布すると
 dangling になるため、リポジトリ側 `.gitignore` で除外するか、単体配布時はコピーに置き換える。
 
-## hooks — 承認ゲート(同梱済み・既定で有効)
+## hooks — 承認ゲートとシークレット検出(同梱済み・既定で有効)
 
 機械的に強制したいルールは AGENTS.md に書かず hooks にする(AGENTS.md の指示は
-アドバイザリだが、hooks は確実に実行される)。最初の例が**承認ゲート** —
+アドバイザリだが、hooks は確実に実行される)。ひとつめが**承認ゲート** —
 proposal の承認チェックが未記入のまま design.md / tasks.md を書こうとしたらブロックする
 PreToolUse フック(ドライランで、指示だけではこのゲートが素通りできることを確認済み)。
 
@@ -148,6 +150,14 @@ hooks は起動ディレクトリの settings しか読まれないため、ワ�
 セッションが `repos/` 配下を編集するケースに備え、ワークスペース層
 (`.claude/settings.json` + `scripts/`)にも同じゲートを同梱している。
 
+ふたつめが**シークレット検出** — 認証情報らしき文字列(AWSキー・GitHub / Slack /
+Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Write / Edit の内容から
+検出してブロックする PreToolUse フック(`scripts/check-secrets.sh`)。AGENTS.md 安全節
+「認証情報をどこにも書かない」の Write / Edit 経路を防御する(Bash リダイレクト等の
+経路は対象外 — リポジトリ全体の検査が必要になったら gitleaks 等のコミット時スキャンを
+別途足す)。誤検知を抑えるため、形式が一意に決まる高確度パターンのみを見る
+(汎用の `password=...` 等は AGENTS.md のルールで守る)。こちらも両層に同梱している。
+
 スタックが決まったら、フォーマット・lint・テストゲートも同様に
 `.claude/settings.json` へ追記して hooks 化する。
 
@@ -158,8 +168,8 @@ Claude Code の機構で、Codex は読まない:
 - スキル(hearing / lens-review / setup-repo / tanaoroshi / session-end)は
   「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
   同等に使える(自動起動しないだけ)
-- 承認ゲート hook は効かないため、スペック必須の変更を Codex に任せる場合は
-  承認欄の確認を人間が行う
+- 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
+  任せる場合は承認欄の確認を、シークレット混入はコミット前の確認を人間が行う
 - すべてのCLIに守らせたい規範は AGENTS.md 本文に書く(hooks や rules に置かない)
 
 ## 運用の要点
