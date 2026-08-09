@@ -102,6 +102,10 @@ cd my-project
 
 ### repos/ にコードリポジトリを追加する
 
+AIセッションで「repos/ に my-app を作って」と指示する — `setup-repo` スキル
+(ワークスペース同梱)が、テンプレート展開 → git init → 初期コミット →
+共有スキルの取り込みまでを決定的に実行する。手動で行う場合:
+
 ```bash
 # cp -R <dir> <target> はコピー先が既に存在すると二重ネストするため「<dir>/.」形式でコピーする
 mkdir -p repos/my-app && cp -R templates/repo/. repos/my-app/
@@ -111,7 +115,7 @@ git add -A && git commit -m "init: リポジトリ層テンプレートを展開
 # スタックが決まったら .gitignore に依存・生成物・キャッシュ等を追記する
 ```
 
-コピー後、AIセッションで「hearing スキルの方法論で docs/requirements.md を作成し、
+作成後、AIセッションで「hearing スキルの方法論で docs/requirements.md を記入し、
 そこから docs/PROJECT.md と docs/STATUS.md を初期化して」と指示する。
 `docs/`・`changes/` 配下は原則AIが書き、人間はレビューと承認を行う。
 
@@ -148,8 +152,9 @@ PreToolUse フック(ドライランで、指示だけではこのゲートが�
 両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
 Claude Code の機構で、Codex は読まない:
 
-- スキル(hearing / lens-review)は「`.claude/skills/<name>/SKILL.md` を読んで
-  その方法論で進めて」と指示すれば同等に使える(自動起動しないだけ)
+- スキル(hearing / lens-review / setup-repo / tanaoroshi / session-end)は
+  「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
+  同等に使える(自動起動しないだけ)
 - 承認ゲート hook は効かないため、スペック必須の変更を Codex に任せる場合は
   承認欄の確認を人間が行う
 - すべてのCLIに守らせたい規範は AGENTS.md 本文に書く(hooks や rules に置かない)
@@ -164,9 +169,10 @@ Claude Code の機構で、Codex は読まない:
   レビューさせる(リポジトリ層同梱の `lens-review` スキル)。別ベンダーのAIとの併用で
   検出率がさらに上がる
 - 失敗したら「やり直せ」ではなく「原因を分析して learnings.md に残してから直して」と指示する
-- セッションの終わりに「STATUS.md を更新して」と一声かけると次回の再開が確実になる
-- 月1回程度「棚卸しして」と一声かける。deprecated の整理・stale_after の見直し・
-  learnings の昇格候補をAIが提案する
+- セッションの終わりに「終了処理して」と一声かける(`session-end` スキルが未コミット確認・
+  書き漏れチェック・journal 反映・STATUS 更新をワンセットで行う)
+- 月1回程度「棚卸しして」と一声かける(`tanaoroshi` スキルが deprecated の整理・
+  stale_after の見直し・learnings の昇格候補・100行上限の点検を提案としてまとめる)
 - 複数エージェントを並列で走らせるときは git worktree でタスクごとに隔離する
   (同一ワーキングディレクトリの同時編集は破綻する)
 
