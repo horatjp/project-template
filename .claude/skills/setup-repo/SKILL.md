@@ -26,7 +26,7 @@ README の手動手順を決定的に実行する。省略・順序変更をし�
    cd repos/<name> && git init && git add -A && git commit -m "init: リポジトリ層テンプレートを展開"
    ```
 4. **共有スキルの取り込み。** ワークスペースの `.claude/skills/` を一覧し、どれを
-   取り込むかユーザーに確認する(既定の提案: hearing)。取り込む場合:
+   取り込むかユーザーに確認する(既定の提案: hearing・git-commit)。取り込む場合:
    ```bash
    ln -s ../../../../.claude/skills/<skill> repos/<name>/.claude/skills/<skill>
    ```

@@ -165,7 +165,7 @@ Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Wr
 両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
 Claude Code の機構で、Codex は読まない:
 
-- スキル(hearing / lens-review / setup-repo / tanaoroshi / session-end)は
+- スキル(hearing / git-commit / lens-review / setup-repo / tanaoroshi / session-end)は
   「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
   同等に使える(自動起動しないだけ)
 - 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
