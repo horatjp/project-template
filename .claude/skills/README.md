@@ -13,5 +13,6 @@ ln -s ../../../../.claude/skills/<skill-name> repos/<repo>/.claude/skills/<skill
 - この symlink はワークスペース内でのみ解決される。リポジトリを単体で clone・配布すると
   dangling になるため、リポジトリ側 `.gitignore` で除外するか、単体配布時はコピーにする
 - 汎用スキル(プロジェクトを問わず使うもの)はここに置かず、各自のユーザーグローバル領域
-  (`~/.claude/skills/`)で管理する(例外: 同梱の git-commit は AGENTS.md の
-  「関心単位でコミット」の手順を実装する雛形なので、ここに置く)
+  (`~/.claude/skills/`)で管理する。例外として、テンプレートが推奨する運用の手順を
+  実装する同梱スキル — git-commit(関心単位のコミット)・codex(別ベンダーレビュー)・
+  grill-me(承認前の計画精査)— はここに置く

@@ -165,7 +165,7 @@ Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Wr
 両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
 Claude Code の機構で、Codex は読まない:
 
-- スキル(hearing / git-commit / lens-review / setup-repo / tanaoroshi / session-end)は
+- スキル(hearing / git-commit / grill-me / lens-review / setup-repo / tanaoroshi / session-end)は
   「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
   同等に使える(自動起動しないだけ)
 - 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
@@ -177,10 +177,11 @@ Claude Code の機構で、Codex は読まない:
 - 要件が曖昧なまま proposal を書かせない。まず hearing スキル(ワークスペース同梱。
   `repos/` 配下では symlink で取り込む — 導入手順参照)で聞き切ってから
 - スペック必須の変更は「changes/ に proposal を作って」から。承認まで design・実装に進ませない
+  (承認する前に「この計画を叩いて」と一声かけると `grill-me` スキルが質問攻めで穴を潰す)
 - 決定・学びは会話中に都度書き込ませる(「後で書く」はさせない)
 - レビューは多視点で: 実装した本人以外のAIにレンズ(UX・セキュリティ・法務など)を指定して
   レビューさせる(リポジトリ層同梱の `lens-review` スキル)。別ベンダーのAIとの併用で
-  検出率がさらに上がる
+  検出率がさらに上がる(Codex CLI を呼ぶ手順は同梱の `codex` スキルが持つ)
 - 失敗したら「やり直せ」ではなく「原因を分析して learnings.md に残してから直して」と指示する
 - セッションの終わりに「終了処理して」と一声かける(`session-end` スキルが未コミット確認・
   書き漏れチェック・journal 反映・STATUS 更新をワンセットで行う)
