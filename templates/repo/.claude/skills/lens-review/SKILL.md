@@ -13,7 +13,8 @@ description: 変更やドキュメントを特定の観点(レンズ)でレビ�
 | 変更種別 | 必須レンズ | 任意レンズ |
 |---|---|---|
 | 画面・UIの変更 | correctness, ux | accessibility |
-| API・CLI・スキーマの変更 | correctness, security | operations, ux |
+| API・CLI・スキーマの変更 | correctness, security | design, operations, ux |
+| 新しい概念・エンティティを足す変更 | correctness, design | — |
 | 外部公開・課金・規約に関わる変更 | correctness, legal | marketing |
 | リリース前(最終確認) | security, operations | legal, marketing |
 | 上記以外 | correctness | — |
@@ -22,6 +23,11 @@ description: 変更やドキュメントを特定の観点(レンズ)でレビ�
 
 ### correctness(正しさ)
 仕様(changes/ のスペック)との一致・エッジケース・エラー処理・テストの妥当性。
+
+### design(概念・モデル)
+モデルが現実を無理なく表しているか。概念テスト(新機能を既存概念で自然に言い直せるか)・
+特殊ケースの条件分岐で帳尻を合わせていないか・「それしかない名前」になっているか。
+関係者ごとに変更・参照するものが違う名詞がひとつの概念に同居していたら分離を提案する。
 
 ### ux(使い勝手)
 ユーザーの動線で実際に操作して詰まる箇所・分かりにくい文言・状態が見えない箇所。
