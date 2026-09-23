@@ -32,7 +32,7 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
 - 担当範囲は Issue 本文にパスの glob で明記し、範囲外のファイルは変更しない
 - 依存は Issue 本文に `Depends on: #12, #13` の形式で明記する
   (`scripts/check-blocked.sh` が自動パースする。フォーマット厳守)
-- ラベル: `blocked`(依存待ち)→ `todo`(着手可)→ `in-progress`(claim 済み)。
+- ラベル: `blocked`(依存待ち)→ `todo`(着手可)→ `in-progress`(claim 済み)。進捗ラベルは常に1つ(spawn が付け替え。着手済みの依存が再オープンされたら blocked + needs-human で人間が継続/破棄を判断)。
   `needs-human` は進捗ラベルと直交する**停止フラグ**: 付いている間は spawn を拒否し、
   依存の同期(check-blocked)も cleanup も触らない(CLOSED でも消さない)。
   解除は人間が判断を Issue コメントに記録してラベルを外し、`scripts/check-blocked.sh` を
@@ -47,8 +47,8 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
   スクリプトが `in-progress` ラベル+assign で Issue を claim する。claim 済みの Issue には着手しない
 - 統合(fan-in)タスクは、依存 Issue が全て close されるまで着手しない
   (`scripts/check-blocked.sh` が自動でラベルを解除する)
-- 中断・再開は同じ Issue で `spawn-worktree.sh` を再実行(既存 worktree を案内)。claim 後の
-  失敗で `in-progress` だけ残ったら、表示される回収コマンドで自分で外す(自動では戻さない)
+- 中断・再開は同じ Issue で `spawn-worktree.sh` を再実行(再 claim して既存 worktree を案内)。claim 後の
+  失敗で `in-progress` だけ残ったら、表示される回収コマンドで担当を解放する(自動では戻さない)
 - worktree にはワークスペース共有スキルの symlink(`.gitignore` 済み)が引き継がれない。
   必要なら `<workspace>/.agents/skills/<name>/SKILL.md` を直接読ませる
 - **記録の分担(本節の適用中は「記録」節の共有文書更新を次のとおり委譲する)**:

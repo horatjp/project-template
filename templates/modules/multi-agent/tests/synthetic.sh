@@ -47,11 +47,16 @@ case "$1 $2" in
     n="$3"
     case "$*" in *".title"*) echo "Fix Login Bug";; esac
     case "$*" in *".state"*) v="GH_STATE_$n"; echo "${!v:-${GH_STATE:-OPEN}}";; esac
-    case "$*" in *".labels[].name"*) [ "${GH_LABELS_FAIL:-0}" = 1 ] && exit 1; printf '%s\n' ${GH_LABELS:-};; esac
+    case "$*" in *".labels[].name"*)
+      [ "${GH_LABELS_FAIL:-0}" = 1 ] && exit 1
+      # 呼び出し回数を数え、GH_LABELS_OK_CALLS 回を超えたら失敗 / GH_LABELS_SECOND があれば2回目以降はそれを返す
+      c=0; [ -f "${GH_LOG:-/dev/null}.labels" ] && c=$(cat "${GH_LOG}.labels"); c=$((c+1)); [ -n "${GH_LOG:-}" ] && echo "$c" > "${GH_LOG}.labels"
+      [ -n "${GH_LABELS_OK_CALLS:-}" ] && [ "$c" -gt "$GH_LABELS_OK_CALLS" ] && exit 1
+      if [ "$c" -ge 2 ] && [ -n "${GH_LABELS_SECOND:-}" ]; then printf '%s\n' $GH_LABELS_SECOND; else printf '%s\n' ${GH_LABELS:-}; fi;; esac
     case "$*" in *".body"*) printf '%s\n' "${GH_BODY:-}";; esac ;;
   "issue edit") [ "${GH_EDIT_FAIL:-0}" = 1 ] && exit 1; echo "edit $*" >> "${GH_LOG:-/dev/null}" ;;
   "issue comment") echo "comment $*" >> "${GH_LOG:-/dev/null}" ;;
-  "issue list") case "$*" in *blocked*) printf '%s\n' ${GH_LIST_BLOCKED:-};; *todo*) printf '%s\n' ${GH_LIST_TODO:-};; esac ;;
+  "issue list") case "$*" in *blocked*) printf '%s\n' ${GH_LIST_BLOCKED:-};; *todo*) [ "${GH_LIST_TODO_FAIL:-0}" = 1 ] && exit 1; printf '%s\n' ${GH_LIST_TODO:-};; *in-progress*) [ "${GH_LIST_INPROGRESS_FAIL:-0}" = 1 ] && exit 1; printf '%s\n' ${GH_LIST_INPROGRESS:-};; esac ;;
   "pr list") echo "${GH_MERGED_HEAD:-}" ;;
   "repo view") echo "main" ;;
 esac
@@ -94,8 +99,12 @@ run "依存 Issue が OPEN なら拒否" 1 "依存Issue #2" -- env GH_LABELS="to
 run "claim 失敗は停止(worktree を作らない)" 1 "claim" -- env GH_LABELS="todo" GH_EDIT_FAIL=1 ./scripts/spawn-worktree.sh 5
 [ "$(git worktree list | wc -l)" -eq 1 ] && ok "  claim 失敗後に worktree が無い" || fail "  claim 失敗後に worktree がある" ""
 run "正常: claim して worktree 作成" 0 "worktree作成完了" -- env GH_LABELS="todo" ./scripts/spawn-worktree.sh 5
-grep -q "add-label in-progress" "$GH_LOG" && ok "  claim が記録されている" || fail "  claim が記録されていない" ""
+grep -q "add-label in-progress" "$GH_LOG" && grep -q "remove-label todo" "$GH_LOG" && ok "  claim が todo→in-progress の付け替えで記録されている" || fail "  claim の記録が不正" "$(cat "$GH_LOG")"
 run "再実行(in-progress + 既存 worktree)は再開案内" 1 "cd " -- env GH_LABELS="in-progress" ./scripts/spawn-worktree.sh 5
+: > "$GH_LOG"
+run "再実行(todo に戻った + 既存 worktree)は再 claim して案内" 0 "再claim" -- env GH_LABELS="todo" ./scripts/spawn-worktree.sh 5
+grep -q "add-label in-progress" "$GH_LOG" && ok "  再 claim が記録されている" || fail "  再 claim が記録されていない" "$(cat "$GH_LOG")"
+run "再実行(todo + 既存 worktree)で claim 失敗 → 停止" 1 "再claim" -- env GH_LABELS="todo" GH_EDIT_FAIL=1 ./scripts/spawn-worktree.sh 5
 run "再実行でも依存 OPEN なら再開案内を出さない" 1 "依存Issue #2" -- env GH_LABELS="in-progress" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/spawn-worktree.sh 5
 enter_fresh_repo; git branch issue-6-fix-login-bug && git worktree add -q ../other issue-6-fix-login-bug || die "占有 fixture の準備に失敗"
 run "既存ブランチが別 worktree で占有中なら claim 前に停止" 1 "別の worktree" -- env GH_LABELS="todo" ./scripts/spawn-worktree.sh 6
@@ -140,6 +149,21 @@ run "needs-human 付き blocked は同期しない" 0 "スキップ" -- env GH_L
 grep -q "remove-label" "$GH_LOG" && fail "  ラベルが変更された" "" || ok "  ラベル変更なし"
 run "依存が全て CLOSED の blocked は todo へ" 0 "todoに付け替え" -- env GH_LIST_BLOCKED=7 GH_LABELS="blocked" GH_BODY="Depends on: #2" GH_STATE_2=CLOSED ./scripts/check-blocked.sh
 grep -q "add-label todo" "$GH_LOG" && ok "  todo が付与された" || fail "  todo が付与されていない" ""
+: > "$GH_LOG"
+run "in-progress の依存が再オープン → blocked + needs-human" 0 "needs-human" -- env GH_LIST_INPROGRESS=8 GH_LABELS="in-progress" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
+grep -q "remove-label in-progress" "$GH_LOG" && grep -q "add-label blocked --add-label needs-human" "$GH_LOG" && ok "  in-progress → blocked + needs-human が記録されている" || fail "  差し戻しの記録が不正" "$(cat "$GH_LOG")"
+: > "$GH_LOG"
+run "todo の依存が再オープン → blocked のみ" 0 "blockedに戻します" -- env GH_LIST_TODO=9 GH_LABELS="todo" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
+grep -q "needs-human" "$GH_LOG" && fail "  todo の差し戻しに needs-human が付いた" "$(cat "$GH_LOG")" || ok "  todo の差し戻しは blocked のみ"
+: > "$GH_LOG"; rm -f "$GH_LOG.labels"
+run "差し戻し時の2回目のラベル取得失敗 → スキップ(編集なし)" 0 "再取得に失敗" -- env GH_LIST_INPROGRESS=8 GH_LABELS="in-progress" GH_LABELS_OK_CALLS=1 GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
+grep -q "issue edit" "$GH_LOG" && fail "  取得失敗なのに編集した" "$(cat "$GH_LOG")" || ok "  編集なし"
+: > "$GH_LOG"; rm -f "$GH_LOG.labels"
+run "取得の間に needs-human が付いた → スキップ(編集なし)" 0 "needs-human が付いた" -- env GH_LIST_INPROGRESS=8 GH_LABELS="in-progress" GH_LABELS_SECOND="in-progress needs-human" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
+grep -q "issue edit" "$GH_LOG" && fail "  needs-human なのに編集した" "$(cat "$GH_LOG")" || ok "  編集なし"
+rm -f "$GH_LOG.labels"
+run "todo 一覧の取得失敗 → 非ゼロ終了" 1 "取得に失敗" -- env GH_LIST_TODO_FAIL=1 ./scripts/check-blocked.sh
+run "in-progress 一覧の取得失敗 → 非ゼロ終了" 1 "取得に失敗" -- env GH_LIST_INPROGRESS_FAIL=1 ./scripts/check-blocked.sh
 
 echo
 echo "pass=$PASS fail=$FAIL"

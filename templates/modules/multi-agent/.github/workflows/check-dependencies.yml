@@ -2,7 +2,7 @@ name: Check blocked issue dependencies
 
 # Issueのclose/reopenのたびに、blocked/todoのラベル状態を依存関係と同期する。
 # - closed:   依存が全て解消したblocked Issueを todo に付け替える
-# - reopened: 再オープンされたIssueに依存するtodo Issueを blocked に戻す
+# - reopened: 再オープンされたIssueに依存する todo / in-progress Issue を blocked に戻す(着手済みは needs-human も付与)
 # cronでの定期実行(scripts/check-blocked.sh)の代わりに、イベント駆動でリアルタイムに動かしたい場合に使う。
 # 両方併用してもよい(cronはActionsが落ちた時のフォールバックになる)。
 # check-blocked.shは冪等なので、二重実行してもラベルが壊れることはない。

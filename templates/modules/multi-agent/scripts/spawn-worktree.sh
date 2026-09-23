@@ -103,7 +103,7 @@ case " $LABELS " in
       echo "       assignee が自分で、作業を再開するなら既存の worktree に戻ってください: cd $WT_ABS" >&2
       echo "       (同じアカウントを複数AIが使う場合、assignee は所有権の保証にならない。担当を人間に確認する)" >&2
     else
-      echo "       自分の claim が失敗の残骸なら回収してから再実行: gh issue edit $ISSUE_NUMBER --remove-label in-progress --remove-assignee @me" >&2
+      echo "       自分の claim が失敗の残骸なら回収してから再実行: gh issue edit $ISSUE_NUMBER --remove-label in-progress --add-label todo --remove-assignee @me" >&2
     fi
     exit 1
     ;;
@@ -118,8 +118,17 @@ SLUG=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/
 
 BRANCH="issue-${ISSUE_NUMBER}-${SLUG}"
 
-# 既にworktreeとして登録済みなら何もしない(登録の有無で判定。単なるディレクトリ存在では判定しない)
+# 既にworktreeとして登録済み(中断からの再開)。登録の有無で判定し、単なるディレクトリ存在では判定しない。
+# 差し戻し(blocked→todo)を経て in-progress が外れていることがあるので、再開前に明示的に claim し直す
 if git worktree list --porcelain | grep -qx "worktree $WT_ABS"; then
+  if [ "$NO_CLAIM" != "--no-claim" ]; then
+    if gh issue edit "$ISSUE_NUMBER" --add-label "in-progress" --remove-label "todo" --add-assignee "@me" 2>/dev/null; then
+      echo "Issue #$ISSUE_NUMBER を再claimしました(in-progress + assignee)。"
+    else
+      echo "エラー: 再claim(ラベル/assign)に失敗しました。担当と Issue の状態を確認してください: gh issue view $ISSUE_NUMBER" >&2
+      exit 1
+    fi
+  fi
   echo "worktree は既に存在します: $WORKTREE_DIR(再開するなら cd $WT_ABS)"
   exit 0
 fi
@@ -170,7 +179,8 @@ if [ "$NO_CLAIM" != "--no-claim" ]; then
   # 注意: ラベル確認→付与は非アトミックなので、複数エージェントが全く同時にspawnすると
   # 稀に両方claimが通る。多数エージェントで運用する場合は作業開始前にassigneeが
   # 自分だけであることを確認すること: gh issue view <番号> --json assignees
-  if gh issue edit "$ISSUE_NUMBER" --add-label "in-progress" --add-assignee "@me" 2>/dev/null; then
+  # todo → in-progress の付け替え(進捗ラベルは1つだけ持つ)
+  if gh issue edit "$ISSUE_NUMBER" --add-label "in-progress" --remove-label "todo" --add-assignee "@me" 2>/dev/null; then
     CLAIMED=1
     echo "Issue #$ISSUE_NUMBER をclaimしました(in-progress + assignee)。"
   else
@@ -186,7 +196,7 @@ fi
 recovery_hint() {
   if [ "$CLAIMED" = 1 ]; then
     echo "       Issue #$ISSUE_NUMBER は claim 済み(in-progress + assignee)のままです。作業しないなら回収してください:" >&2
-    echo "       gh issue edit $ISSUE_NUMBER --remove-label in-progress --remove-assignee @me" >&2
+    echo "       gh issue edit $ISSUE_NUMBER --remove-label in-progress --add-label todo --remove-assignee @me" >&2
   fi
 }
 

@@ -63,10 +63,14 @@ gh issue create --title "結合テスト" --label "blocked" --body "Depends on: 
 
 ### 中断・再開・失敗からの回収
 
-- **再開**: 同じ Issue 番号で `spawn-worktree.sh` を再実行すると、既存 worktree のパスを
-  案内して終了する。`cd` して作業を続ける(claim はそのまま)
+- **再開**: 同じ Issue 番号で `spawn-worktree.sh` を再実行すると、再 claim(todo→in-progress)して
+  既存 worktree のパスを案内する(差し戻しで in-progress が外れていても claim が戻る)。`cd` して続ける
+- **着手済みの依存が再オープンされた**: check-blocked が `blocked` + `needs-human` にする(担当と
+  worktree は残る)。人間が継続/破棄を判断してコメントに記録し `needs-human` を外す。依存の完了後に
+  `todo` へ戻るので、継続なら `spawn-worktree.sh` を再実行して再開する
 - **claim だけ残った**(worktree 作成前に失敗した等): スクリプトが表示する回収コマンド
-  `gh issue edit <番号> --remove-label in-progress --remove-assignee @me` で戻してから再実行。
+  `gh issue edit <番号> --remove-label in-progress --add-label todo --remove-assignee @me` で担当を解放して
+  着手可に戻す(厳密な元状態への復元ではない。blocked / needs-human / 担当が変わっていたら当てずに再確認)。
   自動では戻さない — 同じ GitHub アカウントを複数AIが使うと、自分の claim か検証できないため
 - **`needs-human` の解除**: 人間が判断を Issue コメントに記録 → ラベルを外す →
   `./scripts/check-blocked.sh` を1回実行(停止中に変化した依存を同期する)
