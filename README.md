@@ -113,7 +113,7 @@ AIセッションで「repos/ に my-app を作って」と指示する — `set
 mkdir -p repos/my-app && cp -R templates/repo/. repos/my-app/
 cd repos/my-app
 git init
-git add -A && git commit -m "init: リポジトリ層テンプレートを展開"  # ロールバック地点を最初に作る
+git add -A && git commit -m "🎉 init: リポジトリ層テンプレートを展開"  # ロールバック地点を最初に作る
 # スタックが決まったら .gitignore に依存・生成物・キャッシュ等を追記する
 ```
 
@@ -132,7 +132,9 @@ ln -s ../../../../.claude/skills/<skill-name> repos/<repo>/.claude/skills/<skill
 ```
 
 この symlink はワークスペース内でのみ解決される。リポジトリを単体で clone・配布すると
-dangling になるため、リポジトリ側 `.gitignore` で除外するか、単体配布時はコピーに置き換える。
+dangling になるため、リポジトリ側 `.gitignore` で除外するか(setup-repo スキルは除外する)、
+単体配布時はコピーに置き換える。除外した symlink は `git worktree` で作った作業先にも
+引き継がれないので、必要ならワークスペース側の `SKILL.md` を直接読ませる。
 
 ## hooks — 承認ゲートとシークレット検出(同梱済み・既定で有効)
 
@@ -165,7 +167,7 @@ Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Wr
 両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
 Claude Code の機構で、Codex は読まない:
 
-- スキル(hearing / git-commit / grill-me / lens-review / setup-repo / tanaoroshi / session-end)は
+- スキル(hearing / git-commit / codex / grill-me / lens-review / setup-repo / tanaoroshi / session-end)は
   「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
   同等に使える(自動起動しないだけ)
 - 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
