@@ -6,7 +6,7 @@
 #       (AGENTS.md「変更の進め方」の承認ゲートを機械的に強制する)
 #
 # 設置: .claude/settings.json の hooks.PreToolUse に matcher "Write|Edit" で登録する
-#       (設定例はワークスペースの README「hooks の設定」)。
+#       (設定例はワークスペースの README「hooks — 承認ゲートとシークレット検出」)。
 # 入出力: stdin に Claude Code のフック JSON。tool_input.file_path で対象を判定し、
 #       対象外パスは exit 0(通す)、承認未記入は exit 2(ブロック。stderr がAIに渡る)。
 #

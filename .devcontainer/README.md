@@ -38,7 +38,7 @@ VS Code で「Reopen in Container」(または `devcontainer up`)で起動する
 - Python: `"ghcr.io/devcontainers/features/python:1": {}`
 - Docker(テスト用DB等をコンテナ内から起動): `"ghcr.io/devcontainers/features/docker-in-docker:2": {}`
 - DB 常駐が必要になったら `docker-compose.yml` 方式に移行する(devcontainer の
-  `dockerComposeFile` 指定。Compose の型はリポジトリ層 `test-deploy` 規約の VPS 節参照)
+  `dockerComposeFile` 指定。Compose の構成はスタック決定後にリポジトリ側で決める)
 
 特定リポジトリだけ重い環境が必要になったら、そのリポジトリ側に個別の
 `.devcontainer/` を作って分離する(このファイルをコピーして育てればよい)。
