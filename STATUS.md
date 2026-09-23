@@ -7,8 +7,7 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
 
 ## 進行中
 
-- テンプレート改善(Claude Code × Codex の2者レビュー → 実装済み、Codex の verifier レビュー待ち)。
-  経緯は journal/2026-09-23.md
+(なし — 2026-09-23 のテンプレート改善は Codex の verifier 承認を得てコミット済み。経緯は journal/2026-09-23.md)
 
 ## 宿題(open)
 
@@ -16,8 +15,9 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
 
 ## 次の一手
 
-- Codex のレビュー指摘を3値(対応 / 設計として記録 / 見送り)で仕分けて反映し、関心単位でコミット
-- multi-agent スクリプトを実 GitHub リポジトリでドライラン(合成テストのみ済み)
+- multi-agent スクリプト(spawn / check-blocked / cleanup)を実 GitHub リポジトリでドライラン
+  (gh スタブの合成テストのみ済み。hooks の Claude Code からの実起動経路も未検証)
+- 見送り2件の再検討: ワークスペース層 learnings.md の新設 / requirements の置き場の一本化
 
 ## 最終更新
 
