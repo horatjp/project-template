@@ -16,10 +16,8 @@ Codex の verifier 承認を得てコミット済み。経緯は journal/2026-09
 
 ## 次の一手
 
-- 実 GitHub ドライランは完走(2026-09-23、使い捨て private リポジトリ `horatjp/pt-multiagent-drill`)。
-  残る後片付け: そのリポジトリの削除(ユーザーが行うか、確認のうえ AI が行う)。ローカルの clone と
-  worktree はセッションの scratchpad 内で自動消去される。合成テストは
-  `templates/modules/multi-agent/tests/synthetic.sh`(展開先では `<repo>/tests/synthetic.sh`)
+- 見送り2件の再検討に加え、次の実案件でテンプレートを3か月運用して `tanaoroshi` を1回回す
+  (学びが昇格するか、書く場所が多すぎて放置されるかで仕組みの真価を判定)
 - 見送り2件の再検討: ワークスペース層 learnings.md の新設 / requirements の置き場の一本化
 
 ## 最終更新
