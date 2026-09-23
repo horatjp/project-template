@@ -4,8 +4,8 @@
 導入方法: 下の「## 並列運用(マルチエージェント)」以下を丸ごと、リポジトリの
 AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写さない)。
 全CLIに確実に読ませるため、別ファイル参照ではなく AGENTS.md への追記を推奨。
-追記後の AGENTS.md は約120行になる。「100行以下」の原則に対し、モジュール導入時のみ
-上限を150行とする(AGENTS.md 保守節に同じ例外を明記済み)。
+追記後の AGENTS.md は150行以下に収める(現行テンプレートで約150行 — 上限に近いので、追記するなら同量を削る)。「100行以下」の原則に
+対し、モジュール導入時のみ上限を150行とする(AGENTS.md 保守節に同じ例外を明記済み)。
 -->
 
 ## 並列運用(マルチエージェント)
@@ -23,12 +23,20 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
 
 ### タスクの単位と Issue ライフサイクル
 
+- **change は承認の単位、Issue は実行の単位。** スペック必須の変更は `changes/<name>/` で
+  承認を得てから、tasks の項目ごとに Issue を切る(Issue 本文の「対応スペック」欄で
+  `changes/<name>/tasks.md` の項番を参照。スペック不要な変更はその理由を書く)。
+  実行状態の正典は Issue。tasks のチェックは scribe が Issue の完了を見て反映する。
+  親 change の完了・archive は、全 Issue のマージ後に統合検証と共有文書の更新が済んでから
 - 1 実装タスク = 1 GitHub Issue = 1 git worktree = 1 ブランチ = 1 PR
 - 担当範囲は Issue 本文にパスの glob で明記し、範囲外のファイルは変更しない
 - 依存は Issue 本文に `Depends on: #12, #13` の形式で明記する
   (`scripts/check-blocked.sh` が自動パースする。フォーマット厳守)
 - ラベル: `blocked`(依存待ち)→ `todo`(着手可)→ `in-progress`(claim 済み)。
-  `needs-human` はエスカレーション中(人間の判断が出るまで自動処理を止める)
+  `needs-human` は進捗ラベルと直交する**停止フラグ**: 付いている間は spawn を拒否し、
+  依存の同期(check-blocked)も cleanup も触らない(CLOSED でも消さない)。
+  解除は人間が判断を Issue コメントに記録してラベルを外し、`scripts/check-blocked.sh` を
+  1回実行して停止中の依存変化を同期する
 - **close の意味は「対応PRが main にマージされた」に固定する。** 手動 close はしない。
   PR 本文に `Closes #N` を書き、マージによる自動 close に任せる
   (統合タスクが依存コード未収載の main から分岐する事故を防ぐため)
@@ -39,9 +47,17 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
   スクリプトが `in-progress` ラベル+assign で Issue を claim する。claim 済みの Issue には着手しない
 - 統合(fan-in)タスクは、依存 Issue が全て close されるまで着手しない
   (`scripts/check-blocked.sh` が自動でラベルを解除する)
-- 並列運用中は `docs/learnings.md` に直接追記しない(worktree 間で conflict するため)。
-  `docs/learnings/YYYY-MM-DD-<slug>.md` に1エントリ1ファイルで書き(ゲートは learnings.md 冒頭)、
-  scribe が PR 経由で learnings.md へ統合する。統合時は重複をまとめ、迷ったら削除せず残す
+- 中断・再開は同じ Issue で `spawn-worktree.sh` を再実行(既存 worktree を案内)。claim 後の
+  失敗で `in-progress` だけ残ったら、表示される回収コマンドで自分で外す(自動では戻さない)
+- worktree にはワークスペース共有スキルの symlink(`.gitignore` 済み)が引き継がれない。
+  必要なら `<workspace>/.claude/skills/<name>/SKILL.md` を直接読ませる
+- **記録の分担(本節の適用中は「記録」節の共有文書更新を次のとおり委譲する)**:
+  builder が書くのは担当 glob 内のコード、Issue コメント・PR 本文(現在地・次の一手・検証結果・
+  ブロッカー・記録すべき判断。実行状態の正典として「ファイルのみ」原則の例外)、
+  `docs/learnings/YYYY-MM-DD-<slug>.md`(1エントリ1ファイル。ゲートは learnings.md 冒頭。
+  `docs/learnings.md` への直接追記は conflict するので不可)。`docs/STATUS.md`・生きた文書・
+  decisions・knowledge・tasks の完了報告は scribe/統合担当が Issue と PR を読んで更新し、
+  その完了を change 完了の条件にする。スコープ変更の停止と再承認は委譲しない
 
 ### エスカレーション(`needs-human` を付けて人間の判断を待つ)
 

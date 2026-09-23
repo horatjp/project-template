@@ -34,7 +34,7 @@ cp -R templates/modules/multi-agent/scripts/. <repo>/scripts/
 cp -R templates/modules/multi-agent/.github/. <repo>/.github/
 
 # 2. AGENTS-append.md の「## 並列運用」以下を <repo>/AGENTS.md の末尾に追記する
-#    (追記後は約120行になる。導入時の上限は150行 — AGENTS.md 保守節の例外)
+#    (追記後は150行以下に収める — 導入時の上限。現行で約150行なので wc -l で確認する)
 
 # 3. ラベルを作成(gh CLI 認証済みであること)
 cd <repo> && ./scripts/setup-labels.sh
@@ -55,6 +55,19 @@ gh issue create --title "結合テスト" --label "blocked" --body "Depends on: 
 # PR 作成(本文に Closes #1)→ verifier が lens-review 観点でレビュー → 人間がマージ
 ./scripts/cleanup-worktree.sh --force  # close 済み Issue の worktree を掃除
 ```
+
+### 中断・再開・失敗からの回収
+
+- **再開**: 同じ Issue 番号で `spawn-worktree.sh` を再実行すると、既存 worktree のパスを
+  案内して終了する。`cd` して作業を続ける(claim はそのまま)
+- **claim だけ残った**(worktree 作成前に失敗した等): スクリプトが表示する回収コマンド
+  `gh issue edit <番号> --remove-label in-progress --remove-assignee @me` で戻してから再実行。
+  自動では戻さない — 同じ GitHub アカウントを複数AIが使うと、自分の claim か検証できないため
+- **`needs-human` の解除**: 人間が判断を Issue コメントに記録 → ラベルを外す →
+  `./scripts/check-blocked.sh` を1回実行(停止中に変化した依存を同期する)
+- **worktree に共有スキルが無い**: ワークスペース共有スキルの symlink は `.gitignore` 済みなので
+  `git worktree add` で作った作業先には無い。必要なら
+  `<workspace>/.claude/skills/<name>/SKILL.md` を直接読ませる(単体 clone と同じ扱い)
 
 ## 補足
 
