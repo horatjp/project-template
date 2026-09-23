@@ -10,7 +10,7 @@
 |---|---|
 | `STATUS.md` | 現在地。進行中の案件・open な宿題・次の一手 |
 | `journal/` | 時系列ログ(日誌・議事録)。1日1ファイル、追記専用。運用は `journal/README.md`、書式は `journal/_template.md` |
-| `docs/` | 主題別の生きた文書(要件・関係者情報など)。`docs/decisions/` に事業判断の決定記録 |
+| `docs/` | 主題別の生きた文書(要件・関係者情報など)。`docs/decisions/` に事業判断の決定記録、`docs/learnings.md` に運営側の失敗と学び |
 | `materials/` | ファイル原本(受領・作成した資料。PDF・スライド等) |
 | `repos/` | コードリポジトリ。各リポジトリは独立した git で、個別の `AGENTS.md` に従う |
 | `.agents/skills/` | ワークスペース共有スキル(正典。`.claude/skills/` は Claude Code 用の symlink) |
@@ -19,7 +19,8 @@
 
 ## 2. セッション開始手順
 
-1. `STATUS.md` を読む。必要なら直近の `journal/` 1〜2件(`_template.md` は除く)で経緯を補う
+1. `STATUS.md`(現在地)と `docs/learnings.md`(失敗と学び)を読む。必要なら直近の `journal/`
+   1〜2件(`_template.md` は除く)で経緯を補う
 2. 事業・運営に関わる提案・変更の前に、`docs/decisions/`(`_template.md` は除く)を
    ファイル名と description で走査し、関係する決定を読む
 3. `repos/` 配下のリポジトリで作業する場合は、そのリポジトリの `AGENTS.md` に従う
@@ -34,8 +35,9 @@
 | 重要な事業・運営判断(後から参照する) | `docs/decisions/` に決定記録 + journal に1行(軽い決定は journal のみ) |
 | リポジトリ横断の技術決定・リポジトリがまだ無い時期の技術選定 | `docs/decisions/`(該当リポジトリができたら移す) |
 | 受領・作成したファイル | `materials/` に `YYYY-MM-DD-<topic>.<ext>`(journal からリンクし、出所を1行残す。PDF等は受領時にAI可読の同名 `.md` を併置 — 方法は `materials/README.md`) |
-| リポジトリ横断・事業側の要件(`docs/requirements.md`)・関係者情報 | `docs/`(生きた文書として上書き更新。frontmatter 不要) |
-| 技術的な決定・失敗の学び・変更スペック | 該当リポジトリの `docs/`・`changes/` |
+| リポジトリ横断・事業側の要件(`docs/requirements.md`)・関係者情報 | `docs/`(生きた文書として上書き更新。frontmatter 不要。要件をどちらの層に書くかの判断基準は hearing スキル「記録」節) |
+| 運営側(journal・STATUS・materials・AI 協業)で AI 自身の作業のしかたが失敗した | 根本原因を分析し、`docs/learnings.md` 冒頭のゲートを満たすなら追記してから直す |
+| 技術的な決定・コードや技術の学び・変更スペック | 該当リポジトリの `docs/`・`changes/` |
 | `repos/` 配下の節目(実装完了・レビュー完了など) | `journal/` に1行(リポジトリ側の記録へリンク。詳細はリポジトリ側) |
 
 `docs/decisions/` の読み書きは各リポジトリと同じルール(OKF互換 frontmatter・verified の

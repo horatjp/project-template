@@ -20,8 +20,8 @@ CLIコーディングAI全般に対応する。
 | 手順(必要な時だけ読む) | `.agents/skills/`(オンデマンドでロード。Claude Code は `.claude/skills/` の symlink 経由) |
 | 例外なく強制するルール | hooks(決定的に実行される唯一の手段) |
 
-リポジトリ層の `docs/learnings.md`(失敗と学び)が育ったら、hooks / `.claude/rules/` /
-skills / AGENTS.md へ昇格させる。「学び → 恒常化」の一方通行で、恒常層の肥大化を防ぐ。
+両層の `docs/learnings.md`(失敗と学び。リポジトリ層はコードと技術、ワークスペース層は運営)が
+育ったら、hooks / `.claude/rules/` / skills / AGENTS.md へ昇格させる。「学び → 恒常化」の一方通行で、恒常層の肥大化を防ぐ。
 
 ### 2. 運営とコードを同じメンタルモデルで扱う
 
@@ -64,6 +64,7 @@ project-workspace/
 ├── STATUS.md              # 現在地(進行中・open な宿題・次の一手)
 ├── journal/               # 時系列ログ: 日誌・議事録(YYYY-MM-DD.md、追記専用。ため方は同README)
 ├── docs/                  # 主題別の生きた文書(要件・関係者情報など)
+│   ├── learnings.md       #   運営側の失敗と学び(リポジトリ層と同じゲート・昇格方式)
 │   └── decisions/         #   事業・運営判断の決定記録(リポジトリ層と同じOKF互換書式)
 ├── materials/             # ファイル原本+AI可読の変換版(方法は同README)
 ├── .agents/skills/        # ワークスペース共有スキル(正典。README 参照)

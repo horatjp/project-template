@@ -18,8 +18,9 @@ description: >
    承認されたら実行する(節目を未コミットのまま持ち越さない。プッシュは提案まで)
 2. **書き漏れチェック** — この会話で決めたこと・調べたこと・失敗の学びのうち、まだ
    ファイルに無いものを洗い出し、該当先へ書き込む — ワークスペースなら `docs/decisions/`・
-   `docs/` の生きた文書・`materials/`、リポジトリなら `docs/decisions/`・`docs/knowledge/`・
-   `docs/learnings.md`(層の境界はワークスペース AGENTS.md「記録の境界」)
+   `docs/` の生きた文書・`materials/`・`docs/learnings.md`(運営側の失敗)、リポジトリなら
+   `docs/decisions/`・`docs/knowledge/`・`docs/learnings.md`(層の境界はワークスペース
+   AGENTS.md「記録の境界」)
 3. **journal 反映**(ワークスペース配下のみ)— 今日の `journal/YYYY-MM-DD.md` に本日の
    出来事・節目が反映されているか確認し、足りなければ追記する
    (日付は環境の現在日付を確認して書く)

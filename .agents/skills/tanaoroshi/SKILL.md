@@ -16,8 +16,8 @@ description: >
 
 - ワークスペース直下で実行: ワークスペースの `docs/decisions/`・`STATUS.md` に加え、
   `repos/` 配下の各リポジトリも対象にするかユーザーに確認する
-  (`docs/knowledge/`・`docs/learnings.md` はリポジトリ層のみ — 手順 1 の knowledge と 2 は
-  リポジトリを対象に含めたときだけ行う。AGENTS.md の上限は両層で見る)
+  (`docs/knowledge/` はリポジトリ層のみ — 手順 1 の knowledge はリポジトリを対象に含めたときだけ。
+  `docs/learnings.md` と AGENTS.md の上限は両層で見る)
 - リポジトリ直下で実行: そのリポジトリのみ(現在地は `docs/STATUS.md`)
 
 ## 手順(結果は提案としてまとめ、承認後に実行する)
@@ -30,7 +30,7 @@ description: >
 2. **learnings の昇格** — `docs/learnings.md` を読み、繰り返し効いている学びを
    昇格候補として提案する: 機械的に強制できる → hooks / パス限定 → `.claude/rules/` /
    多段階の手順 → `.agents/skills/` / それ以外の恒常ルール → AGENTS.md。
-   昇格が承認されたら learnings 側の記述は削除する(一方通行)。
+   昇格が承認されたら learnings 側のエントリ末尾に昇格先を追記する(本文は残す。一方通行)。
    multi-agent 導入済みなら `docs/learnings/*.md`(1エントリ1ファイル)が統合されずに
    残っていないかも見る
 3. **上限チェック** — AGENTS.md(ワークスペース100行 / リポジトリ100行、multi-agent
