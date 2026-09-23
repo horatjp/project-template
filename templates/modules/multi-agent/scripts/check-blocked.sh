@@ -10,6 +10,11 @@
 # 使い方: cron等で定期実行する(例: 5分おき)
 #   */5 * * * * cd /path/to/repo && ./scripts/check-blocked.sh >> /var/log/check-blocked.log 2>&1
 #
+# 停止フラグ:
+#   label "needs-human" が付いたIssueは両方向とも触らない(人間の判断待ち)。
+#   人間が判断をコメントに記録してラベルを外したら、このスクリプトを1回手動実行して
+#   停止中に変化した依存関係を同期する(workflow は close/reopen でしか起動しないため)。
+#
 # 前提:
 #   - gh CLI がインストール済み・認証済みであること (gh auth login)
 #   - ラベル blocked / todo が存在すること (scripts/setup-labels.sh で作成)
@@ -55,6 +60,24 @@ deps_state() {
   echo "closed"
 }
 
+# needs-human(人間の判断待ち)は進捗ラベルと直交する停止フラグ。付いている間はラベル同期を止める。
+# 取得に失敗したら "?" を返し、呼び出し側はスキップ扱いにする(停止中かどうか判定できないため)。
+issue_labels() {
+  # $1: issue number → 出力: ラベル名をスペース区切り(先頭・末尾にスペース付き)
+  local names
+  names=$(gh issue view "$1" --json labels -q '.labels[].name' 2>/dev/null | tr '\n' ' ') || { echo "?"; return 0; }
+  printf ' %s ' "$names"
+}
+
+is_needs_human() {
+  # $1: issue number → 0=停止中(または判定不能)、1=通常
+  local labels
+  labels=$(issue_labels "$1")
+  [ "$labels" = "?" ] && return 0
+  case "$labels" in *" needs-human "*) return 0 ;; esac
+  return 1
+}
+
 # ------------------------------------------------------------------
 # 1. blocked -> todo (依存が全て解消したものを着手可能にする)
 # ------------------------------------------------------------------
@@ -68,6 +91,11 @@ else
   for issue_number in $blocked_numbers; do
     # 番号はgh CLIのJSON出力からのみ取得しているが、念のため検証する
     [[ "$issue_number" =~ ^[0-9]+$ ]] || { log "skip invalid issue number: $issue_number"; continue; }
+
+    if is_needs_human "$issue_number"; then
+      log "issue #$issue_number: needs-human(人間の判断待ち)またはラベル取得不能のため同期をスキップします。"
+      continue
+    fi
 
     body=$(gh issue view "$issue_number" --json body -q '.body' 2>/dev/null) || {
       log "issue #$issue_number: 本文の取得に失敗しました。スキップします。"
@@ -105,6 +133,11 @@ todo_numbers=$(gh issue list --label "todo" --state open --limit "$LIMIT" --json
 
 for issue_number in $todo_numbers; do
   [[ "$issue_number" =~ ^[0-9]+$ ]] || continue
+
+  if is_needs_human "$issue_number"; then
+    log "issue #$issue_number: needs-human(人間の判断待ち)またはラベル取得不能のため同期をスキップします。"
+    continue
+  fi
 
   body=$(gh issue view "$issue_number" --json body -q '.body' 2>/dev/null) || continue
 
