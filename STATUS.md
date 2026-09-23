@@ -7,8 +7,8 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
 
 ## 進行中
 
-(なし — 2026-09-23 のテンプレート改善は第1ラウンド・第2ラウンド群1〜3とも Codex の verifier 承認を得て
-コミット済み。経緯は journal/2026-09-23.md)
+(なし — 2026-09-23 のテンプレート改善は第1ラウンド・第2ラウンド群1〜3・multi-agent ラベル遷移修正とも
+Codex の verifier 承認を得てコミット済み。経緯は journal/2026-09-23.md)
 
 ## 宿題(open)
 
@@ -16,13 +16,10 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
 
 ## 次の一手
 
-- multi-agent スクリプトの実 GitHub ドライラン。対象リポジトリは**未確定**(使い捨ての private
-  リポジトリをユーザーが指定する)。手順: 指定リポジトリで `scripts/setup-labels.sh` → task.md 形式で
-  Issue を2件(片方に `Depends on:`)→ `spawn-worktree.sh` → PR 作成・マージ → `check-blocked.sh` で
-  blocked→todo を確認 → `cleanup-worktree.sh --force`。合格条件: 各段階の出力が
-  `templates/modules/multi-agent/README.md` の説明どおり、かつ削除されたのは対象 worktree/ブランチのみ。
-  後片付け: テスト用リポジトリの削除(ユーザー実施)。合成テストはこのワークスペースでは
-  `templates/modules/multi-agent/tests/synthetic.sh`(展開先では `<repo>/tests/synthetic.sh`)で再実行できる
+- 実 GitHub ドライランは完走(2026-09-23、使い捨て private リポジトリ `horatjp/pt-multiagent-drill`)。
+  残る後片付け: そのリポジトリの削除(ユーザーが行うか、確認のうえ AI が行う)。ローカルの clone と
+  worktree はセッションの scratchpad 内で自動消去される。合成テストは
+  `templates/modules/multi-agent/tests/synthetic.sh`(展開先では `<repo>/tests/synthetic.sh`)
 - 見送り2件の再検討: ワークスペース層 learnings.md の新設 / requirements の置き場の一本化
 
 ## 最終更新
