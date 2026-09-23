@@ -7,8 +7,8 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
 
 ## 進行中
 
-(なし — 2026-09-23 のテンプレート改善は第1ラウンド・第2ラウンド群1とも Codex の verifier 承認を得て
-コミット済み。経緯は journal/2026-09-23.md)
+- テンプレート改善 第2ラウンド 群3(Codex でも同じ hooks を効かせる): 実装中。第1ラウンド・群1・群2は
+  Codex verifier 承認済みでコミット済み。経緯は journal/2026-09-23.md
 
 ## 宿題(open)
 
@@ -23,9 +23,9 @@ docs/decisions/ に任せる。宿題は完了したら消す(履歴は journal 
   `templates/modules/multi-agent/README.md` の説明どおり、かつ削除されたのは対象 worktree/ブランチのみ。
   後片付け: テスト用リポジトリの削除(ユーザー実施)。合成テストはこのワークスペースでは
   `templates/modules/multi-agent/tests/synthetic.sh`(展開先では `<repo>/tests/synthetic.sh`)で再実行できる
-- 保留中の改善案(2026-09-23 に議論済み・未承認): 群2「共有スキルの正典を `.agents/skills/` へ移し
-  `.claude/skills` は symlink」「check-secrets.sh の改名」、群3「Codex でも同じ hooks を効かせる
-  (.codex/hooks.json + apply_patch 対応)」。議論の原文は materials/2026-09-23-codex-review-exchange.md
+- 保留中の改善案(2026-09-23 に議論済み): 群3「Codex でも同じ hooks を効かせる(.codex/hooks.json +
+  apply_patch 対応。追加行のみ検査・パーサ無しはブロック)」。議論の原文は
+  materials/2026-09-23-codex-review-exchange.md
 - 見送り2件の再検討: ワークスペース層 learnings.md の新設 / requirements の置き場の一本化
 
 ## 最終更新
