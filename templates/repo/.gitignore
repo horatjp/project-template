@@ -1,5 +1,8 @@
 .DS_Store
 
+# Claude Code の個人設定(権限の許可リスト等。共有しない)
+.claude/settings.local.json
+
 # 認証情報は置かない(防御的に除外)
 .env
 .env.*
