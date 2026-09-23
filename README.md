@@ -68,7 +68,7 @@ project-workspace/
 ├── materials/             # ファイル原本+AI可読の変換版(方法は同README)
 ├── .agents/skills/        # ワークスペース共有スキル(正典。README 参照)
 ├── .claude/skills/        # → .agents/skills/ への symlink(Claude Code 用の入口)
-├── scripts/               # hooks 用スクリプト(承認ゲート・シークレット検出。設定は .claude/settings.json)
+├── scripts/               # hooks 用スクリプト(承認ゲート・認証情報検出・自己テスト。設定は .claude/settings.json と .codex/hooks.json)
 ├── .devcontainer/         # 汎用開発コンテナ(コンテナ運用しない場合は無視してよい。同README参照)
 ├── repos/                 # コードリポジトリ置き場(git 管理外。各リポジトリが独立した git)
 └── templates/
@@ -77,7 +77,8 @@ project-workspace/
     └── repo/              # リポジトリ層テンプレート(repos/ に新規リポジトリを作るときコピー)
         ├── AGENTS.md      # 正典。100行以下を維持(+ CLAUDE.md symlink)
         ├── changes/       # 変更スペック(大きい変更のみ proposal → design → tasks)
-        ├── scripts/       # hooks 用スクリプト(承認ゲート・シークレット検出)
+        ├── scripts/       # hooks 用スクリプト(承認ゲート・認証情報検出・自己テスト)
+        ├── .codex/hooks.json  # Codex CLI 用の hooks 設定(同じスクリプトを登録)
         ├── docs/
         │   ├── STATUS.md      # 現在地(毎セッション必読)
         │   ├── learnings.md   # 失敗と学び(毎セッション必読・100行上限)
@@ -139,42 +140,49 @@ dangling になるため、リポジトリ側 `.gitignore` で除外するか(se
 単体配布時はコピーに置き換える。除外した symlink は `git worktree` で作った作業先にも
 引き継がれないので、必要ならワークスペース側の `SKILL.md` を直接読ませる。
 
-## hooks — 承認ゲートとシークレット検出(同梱済み・既定で有効)
+## hooks — 承認ゲートと認証情報検出(同梱済み・既定で有効)
 
 機械的に強制したいルールは AGENTS.md に書かず hooks にする(AGENTS.md の指示は
 アドバイザリだが、hooks は確実に実行される)。ひとつめが**承認ゲート** —
 proposal の承認チェックが未記入のまま design.md / tasks.md を書こうとしたらブロックする
 PreToolUse フック(ドライランで、指示だけではこのゲートが素通りできることを確認済み)。
 
-`templates/repo/.claude/settings.json` に設定済みで、`scripts/check-proposal-approved.sh` と
-あわせてリポジトリ作成時からそのまま動く(追加の設定は不要。初回セッションで hooks の
-実行許可を求められたら内容を確認して許可する)。スクリプトは `changes/*/design.md`・
+`templates/repo/.claude/settings.json`(Claude Code)と `templates/repo/.codex/hooks.json`(Codex CLI)に
+設定済みで、`scripts/check-proposal-approved.sh` とあわせてリポジトリ作成時からそのまま動く
+(追加の設定は不要。初回セッションで hooks の実行許可・信頼確認を求められたら内容を確認して許可する)。スクリプトは `changes/*/design.md`・
 `tasks.md` への書き込みだけを検査し、対象外のパスは exit 0 で通す
 (ブロックは exit 2 — stderr がそのままAIへのフィードバックになる)。
 hooks は起動ディレクトリの settings しか読まれないため、ワークスペース直下で開いた
 セッションが `repos/` 配下を編集するケースに備え、ワークスペース層
 (`.claude/settings.json` + `scripts/`)にも同じゲートを同梱している。
 
-ふたつめが**シークレット検出** — 認証情報らしき文字列(AWSキー・GitHub / Slack /
-Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Write / Edit の内容から
+ふたつめが**認証情報検出** — 認証情報らしき文字列(AWSキー・GitHub / Slack /
+Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を、これから書き込む内容から
 検出してブロックする PreToolUse フック(`scripts/check-credentials.sh`)。AGENTS.md 安全節
-「認証情報をどこにも書かない」の Write / Edit 経路を防御する(Bash リダイレクト等の
+「認証情報をどこにも書かない」の編集ツール経路を防御する(Bash リダイレクト等の
 経路は対象外 — リポジトリ全体の検査が必要になったら gitleaks 等のコミット時スキャンを
 別途足す)。誤検知を抑えるため、形式が一意に決まる高確度パターンのみを見る
 (汎用の `password=...` 等は AGENTS.md のルールで守る)。こちらも両層に同梱している。
+
+どちらのスクリプトも Claude Code(Write / Edit)と Codex CLI(`apply_patch`)の両方の入力形式を
+扱う。Codex では `apply_patch` のパッチ本文からヘッダー行のパスを抽出して承認ゲートを判定し、
+認証情報は追加行だけを検査する(漏えい済みの値を削除する編集は止めない)。JSON の解析に jq か
+python3 が必要で、どちらも無ければ検査不能として理由を表示しブロックする。
+`scripts/hooks-selftest.sh` が両形式の合成入力で挙動を検証する(実 CLI は不要)。
 
 スタックが決まったら、フォーマット・lint・テストゲートも同様に
 `.claude/settings.json` へ追記して hooks 化する。
 
 **Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読むため、追加設定なしで
 両層の運用ルールが適用される。スキルは `.agents/skills/` に置いてあるため Codex も
-自動発見する(`.claude/skills/` はその symlink)。ただし hooks・`.claude/rules/` は
+自動発見する(`.claude/skills/` はその symlink)。承認ゲート・認証情報検出の hooks も
+`.codex/hooks.json` で同じスクリプトが登録されており、初回の信頼確認後に `apply_patch`
+経路を検査する(シェル等の別経路は対象外で、完全な防壁ではない)。ただし `.claude/rules/` は
 Claude Code の機構で、Codex は読まない:
 
 - 自動発見されない CLI では「`.agents/skills/<name>/SKILL.md` を読んでその方法論で
   進めて」と指示すれば同等に使える
-- 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
-  任せる場合は承認欄の確認を、シークレット混入はコミット前の確認を人間が行う
+- hooks を持たない CLI に任せる場合は、承認欄の確認とコミット前の認証情報混入の確認を人間が行う
 - すべてのCLIに守らせたい規範は AGENTS.md 本文に書く(hooks や rules に置かない)
 
 ## 運用の要点
