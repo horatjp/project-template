@@ -5,8 +5,9 @@
 #       削除時はブランチも削除し、spawn-worktree.sh での再作成を妨げないようにする。
 #
 # 使い方:
-#   ./scripts/cleanup-worktree.sh           # 削除候補を一覧表示のみ
-#   ./scripts/cleanup-worktree.sh --force   # 実際に削除する(クリーンなworktreeのみ)
+#   ./scripts/cleanup-worktree.sh           # 削除候補の一覧のみ(作業ツリー・Git参照・GitHub状態を変更しない。
+#                                           #  GitHub の Issue 状態は読み取る)
+#   ./scripts/cleanup-worktree.sh --force   # 実際に削除する(クリーンなworktreeのみ)。prune と fetch もこのときだけ
 #
 # 安全装置:
 #   - 未コミット変更が残っているworktreeは --force でも削除せずスキップする
@@ -24,13 +25,16 @@
 
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# 物理パス(pwd -P)で持つ。git worktree list は symlink を解決した実パスを返す
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$REPO_DIR"
 
 FORCE="${1:-}"
 
-# 消えたworktreeの残骸を先に掃除しておく
-git worktree prune
+if [ -n "$FORCE" ] && [ "$FORCE" != "--force" ]; then
+  echo "エラー: 不明なオプション: $FORCE(使えるのは --force のみ)" >&2
+  exit 1
+fi
 
 # 統合先(デフォルトブランチ)を検出する。spawn-worktree.sh と同じ手順
 DEFAULT_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || true)
@@ -38,10 +42,17 @@ if [ -z "$DEFAULT_BRANCH" ]; then
   DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || true)
 fi
 [ -z "$DEFAULT_BRANCH" ] && DEFAULT_BRANCH="main"
-git fetch origin "$DEFAULT_BRANCH" >/dev/null 2>&1 || echo "警告: git fetch に失敗しました。手元の origin/$DEFAULT_BRANCH 参照で統合済みを判定します。" >&2
+
+TARGET="origin/$DEFAULT_BRANCH"
+if [ "$FORCE" = "--force" ]; then
+  # 実行時だけ、消えたworktreeの残骸を掃除し、統合先を最新にする(一覧時は参照を変更しない)
+  git worktree prune
+  git fetch origin "$DEFAULT_BRANCH" >/dev/null 2>&1 || echo "警告: git fetch に失敗しました。手元の origin/$DEFAULT_BRANCH 参照で統合済みを判定します。" >&2
+else
+  echo "(一覧のみ。手元の参照で見積もる — --force 実行時は fetch して再評価する)"
+fi
 # 統合済みの証明はリモートの default(origin/<default>)に対してのみ行う。ローカルの <default> には
 # 未 push の作業コミットが混ざりうるため、fallback にしない(参照が無ければ祖先判定を使わない)
-TARGET="origin/$DEFAULT_BRANCH"
 if ! git rev-parse --verify -q "$TARGET^{commit}" >/dev/null; then
   echo "警告: $TARGET が見つかりません。祖先判定は行わず、マージ済みPRの head 一致だけでブランチ削除を判定します。" >&2
   TARGET=""

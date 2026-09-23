@@ -37,12 +37,14 @@ if [ -n "$NO_CLAIM" ] && [ "$NO_CLAIM" != "--no-claim" ]; then
   exit 1
 fi
 
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# 物理パス(pwd -P)で持つ。git worktree list は symlink を解決した実パスを返すため、
+# /tmp → /private/tmp のような環境で論理パスと比較すると既存 worktree を見逃す
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd -P)"
 REPO_NAME="$(basename "$REPO_DIR")"
 cd "$REPO_DIR"
 
 WORKTREE_DIR="../${REPO_NAME}-issue-${ISSUE_NUMBER}"
-WT_ABS="$(cd .. && pwd)/${REPO_NAME}-issue-${ISSUE_NUMBER}"
+WT_ABS="$(cd .. && pwd -P)/${REPO_NAME}-issue-${ISSUE_NUMBER}"
 
 # ------------------------------------------------------------------
 # 1. Issueの状態確認(着手してよいか)
