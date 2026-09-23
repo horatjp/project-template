@@ -2,7 +2,7 @@
 type: decision
 title: <決定の一言>
 description: <一行要約。ファイルを開かずに関連判断できる粒度で>
-status: stable          # draft(承認待ち) | stable(現行) | deprecated(無効)
+status: draft           # draft(承認待ち) | stable(現行) | deprecated(無効)。承認で stable に(同一ファイル内で書き換える)
 superseded_by:          # deprecated のとき必須。置き換えた決定記録のファイル名
 stale_after:            # 任意(YYYY-MM-DD)。時限性のある決定のみ。過ぎたら要再検証
 tags: []
@@ -27,8 +27,10 @@ frontmatter は OKF(Open Knowledge Format)互換の方言(actor 表記と日付�
 - 調査に基づく決定は、根拠になった docs/knowledge/ のファイルと相互にリンクする
 - 既存の決定の編集は、開始前にユーザーへ「更新か上書きか」を確認する:
   - 誤字・てにをは・補足説明(決定は不変)→ **上書き**(そのまま編集)
-  - 技術スタック・設計・インフラ・データモデルの変更、status の変更 → **更新**
+  - 技術スタック・設計・インフラ・データモデルなど決定内容そのものの変更 → **更新**
     (新しい決定記録を起こし、旧を `status: deprecated` + `superseded_by` に)
+  - draft → stable の承認、および旧記録への deprecated / superseded_by の記入は、
+    同一ファイル内のライフサイクル変更として上書きする(新しい記録は起こさない)
 -->
 
 ## 背景

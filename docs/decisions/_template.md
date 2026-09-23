@@ -2,7 +2,7 @@
 type: decision
 title: <決定の一言>
 description: <一行要約。ファイルを開かずに関連判断できる粒度で>
-status: stable          # draft(承認待ち) | stable(現行) | deprecated(無効)
+status: draft           # draft(承認待ち) | stable(現行) | deprecated(無効)。承認で stable に(同一ファイル内で書き換える)
 superseded_by:          # deprecated のとき必須。置き換えた決定記録のファイル名
 stale_after:            # 任意(YYYY-MM-DD)。時限性のある決定のみ。過ぎたら要再検証
 tags: []
@@ -23,8 +23,9 @@ verified: []            # 空=未検証。書式: [{by: agent:<tool>@reviewer | 
 - 重要な決定はまず `status: draft` で起こし、ユーザーの承認を得て `stable` にする
 - 「やらない」と決めたことも1件の決定記録として書く(例:「○○プランは提供しない」)
 - 既存の決定の編集は、開始前にユーザーへ「更新か上書きか」を確認する:
-  誤字・補足(決定は不変)→ 上書き / 決定内容・status の変更 → 更新
-  (新しい決定記録を起こし、旧を `status: deprecated` + `superseded_by` に)
+  誤字・補足(決定は不変)→ 上書き / 決定内容そのものの変更 → 更新
+  (新しい決定記録を起こし、旧を `status: deprecated` + `superseded_by` に)。
+  draft → stable の承認と、旧記録への deprecated / superseded_by の記入は同一ファイル内で上書き
 - 出所の打ち合わせがあれば journal へリンクする
 -->
 
