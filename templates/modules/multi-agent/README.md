@@ -72,7 +72,7 @@ gh issue create --title "結合テスト" --label "blocked" --body "Depends on: 
   `./scripts/check-blocked.sh` を1回実行(停止中に変化した依存を同期する)
 - **worktree に共有スキルが無い**: ワークスペース共有スキルの symlink は `.gitignore` 済みなので
   `git worktree add` で作った作業先には無い。必要なら
-  `<workspace>/.claude/skills/<name>/SKILL.md` を直接読ませる(単体 clone と同じ扱い)
+  `<workspace>/.agents/skills/<name>/SKILL.md` を直接読ませる(単体 clone と同じ扱い)
 
 ## 補足
 

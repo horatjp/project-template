@@ -17,7 +17,7 @@ CLIコーディングAI全般に対応する。
 | 知識の性質 | 置き場 |
 |---|---|
 | 常時必要な事実・規範 | `AGENTS.md`(100行以下を維持) |
-| 手順(必要な時だけ読む) | `.claude/skills/`(オンデマンドでロード) |
+| 手順(必要な時だけ読む) | `.agents/skills/`(オンデマンドでロード。Claude Code は `.claude/skills/` の symlink 経由) |
 | 例外なく強制するルール | hooks(決定的に実行される唯一の手段) |
 
 リポジトリ層の `docs/learnings.md`(失敗と学び)が育ったら、hooks / `.claude/rules/` /
@@ -66,7 +66,8 @@ project-workspace/
 ├── docs/                  # 主題別の生きた文書(要件・関係者情報など)
 │   └── decisions/         #   事業・運営判断の決定記録(リポジトリ層と同じOKF互換書式)
 ├── materials/             # ファイル原本+AI可読の変換版(方法は同README)
-├── .claude/skills/        # ワークスペース共有スキル(README 参照)
+├── .agents/skills/        # ワークスペース共有スキル(正典。README 参照)
+├── .claude/skills/        # → .agents/skills/ への symlink(Claude Code 用の入口)
 ├── scripts/               # hooks 用スクリプト(承認ゲート・シークレット検出。設定は .claude/settings.json)
 ├── .devcontainer/         # 汎用開発コンテナ(コンテナ運用しない場合は無視してよい。同README参照)
 ├── repos/                 # コードリポジトリ置き場(git 管理外。各リポジトリが独立した git)
@@ -83,10 +84,11 @@ project-workspace/
         │   ├── PROJECT.md     # 安定した背景情報(オンデマンド)
         │   ├── decisions/     # 決定記録=「なぜ」の記録
         │   └── knowledge/     # 技術調査・バグ解決・一次資料
+        ├── .agents/skills/    # リポジトリ固有の手順スキル(正典。Codex も自動発見)
         └── .claude/
             ├── settings.json  # hooks 設定(既定で有効)
             ├── rules/     # パス限定の規約(該当ファイルを触る時のみロード)
-            └── skills/    # リポジトリ固有の手順スキル
+            └── skills/    # → ../.agents/skills/ への symlink(Claude Code 用の入口)
 ```
 
 ## 導入手順
@@ -128,7 +130,8 @@ AIに両方を読ませて統合案を出させ、承認してから統合する
 リポジトリ側へ symlink して取り込む:
 
 ```bash
-ln -s ../../../../.claude/skills/<skill-name> repos/<repo>/.claude/skills/<skill-name>
+ln -s ../../../../.agents/skills/<skill-name> repos/<repo>/.agents/skills/<skill-name>   # 正典(Codex も読む)
+ln -s ../../.agents/skills/<skill-name>       repos/<repo>/.claude/skills/<skill-name>   # Claude Code 用の入口
 ```
 
 この symlink はワークスペース内でのみ解決される。リポジトリを単体で clone・配布すると
@@ -154,7 +157,7 @@ hooks は起動ディレクトリの settings しか読まれないため、ワ�
 
 ふたつめが**シークレット検出** — 認証情報らしき文字列(AWSキー・GitHub / Slack /
 Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Write / Edit の内容から
-検出してブロックする PreToolUse フック(`scripts/check-secrets.sh`)。AGENTS.md 安全節
+検出してブロックする PreToolUse フック(`scripts/check-credentials.sh`)。AGENTS.md 安全節
 「認証情報をどこにも書かない」の Write / Edit 経路を防御する(Bash リダイレクト等の
 経路は対象外 — リポジトリ全体の検査が必要になったら gitleaks 等のコミット時スキャンを
 別途足す)。誤検知を抑えるため、形式が一意に決まる高確度パターンのみを見る
@@ -164,12 +167,12 @@ Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を Wr
 `.claude/settings.json` へ追記して hooks 化する。
 
 **Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読むため、追加設定なしで
-両層の運用ルールが適用される。ただし hooks・`.claude/rules/`・`.claude/skills/` は
+両層の運用ルールが適用される。スキルは `.agents/skills/` に置いてあるため Codex も
+自動発見する(`.claude/skills/` はその symlink)。ただし hooks・`.claude/rules/` は
 Claude Code の機構で、Codex は読まない:
 
-- スキル(hearing / git-commit / codex / grill-me / lens-review / setup-repo / tanaoroshi / session-end)は
-  「`.claude/skills/<name>/SKILL.md` を読んでその方法論で進めて」と指示すれば
-  同等に使える(自動起動しないだけ)
+- 自動発見されない CLI では「`.agents/skills/<name>/SKILL.md` を読んでその方法論で
+  進めて」と指示すれば同等に使える
 - 承認ゲート・シークレット検出 hook は効かないため、スペック必須の変更を Codex に
   任せる場合は承認欄の確認を、シークレット混入はコミット前の確認を人間が行う
 - すべてのCLIに守らせたい規範は AGENTS.md 本文に書く(hooks や rules に置かない)

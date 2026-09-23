@@ -29,14 +29,16 @@ README の手動手順を決定的に実行する。省略・順序変更をし�
    ```
    `user.name` / `user.email` 未設定で commit が失敗したら、勝手に設定せずユーザーに
    設定を依頼して再実行する
-4. **共有スキルの取り込み。** ワークスペースの `.claude/skills/` を一覧し、どれを
+4. **共有スキルの取り込み。** ワークスペースの `.agents/skills/` を一覧し、どれを
    取り込むかユーザーに確認する(既定の提案: hearing・git-commit・codex・grill-me —
-   README「運用の要点」が前提にする4つ)。取り込む場合(ワークスペース直下で実行):
+   README「運用の要点」が前提にする4つ)。取り込む場合(ワークスペース直下で実行。
+   正典は `.agents/skills/`、Claude Code 用の入口は `.claude/skills/`):
    ```bash
-   ln -s ../../../../.claude/skills/<skill> repos/<name>/.claude/skills/<skill>
+   ln -s ../../../../.agents/skills/<skill> repos/<name>/.agents/skills/<skill>
+   ln -s ../../.agents/skills/<skill>       repos/<name>/.claude/skills/<skill>
    ```
    symlink はワークスペース内でのみ解決され、単体 clone や `git worktree` の作業先には無いため、
-   リポジトリの `.gitignore` に `.claude/skills/<skill>` を追記してコミットする
+   リポジトリの `.gitignore` に `.agents/skills/<skill>` と `.claude/skills/<skill>` を追記してコミットする
    (単体配布するときはコピーに置き換える)
 5. **検証と報告。** `repos/<name>/AGENTS.md` の存在と `git -C repos/<name> log --oneline`
    (初期コミットがあること。共有スキルを取り込んだ場合は `.gitignore` のコミットも)を

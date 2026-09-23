@@ -50,7 +50,7 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
 - 中断・再開は同じ Issue で `spawn-worktree.sh` を再実行(既存 worktree を案内)。claim 後の
   失敗で `in-progress` だけ残ったら、表示される回収コマンドで自分で外す(自動では戻さない)
 - worktree にはワークスペース共有スキルの symlink(`.gitignore` 済み)が引き継がれない。
-  必要なら `<workspace>/.claude/skills/<name>/SKILL.md` を直接読ませる
+  必要なら `<workspace>/.agents/skills/<name>/SKILL.md` を直接読ませる
 - **記録の分担(本節の適用中は「記録」節の共有文書更新を次のとおり委譲する)**:
   builder が書くのは担当 glob 内のコード、Issue コメント・PR 本文(現在地・次の一手・検証結果・
   ブロッカー・記録すべき判断。実行状態の正典として「ファイルのみ」原則の例外)、

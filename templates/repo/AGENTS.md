@@ -30,7 +30,7 @@
      実装詳細レベルで design と実装が乖離しただけなら、design を直して現在形に保つ
      (完了報告の「判断した点」に記す)
 - スペック必須の変更は完了前に、実装した本人以外のAIによる観点レビューを受ける
-  (観点の選び方は `.claude/skills/lens-review/SKILL.md`)
+  (観点の選び方は `.agents/skills/lens-review/SKILL.md`)
 - 上記に該当しない変更(バグ修正・微修正・内部リファクタリング)はスペック不要。直接実装してよい
 - 完了した change は、恒久的に効く判断が design または tasks の完了報告にあれば
   `docs/decisions/` へ抽出してから `changes/archive/YYYY-MM-DD-<change-name>/`(完了日)へ移動する
@@ -54,9 +54,9 @@
   (同じ tool-name は role・セッションが違っても本人=自己検証で不可。架空の検証者を書かない)。
   本文の内容を変更したら既存の `verified` を削除する(誤字修正は除く)
 - 学びが**規範に育ったら**昇格する(ユーザーに提案して承認を得る):
-  機械的に強制できる → hooks / パス限定 → `.claude/rules/` / 多段階の手順 → `.claude/skills/`
+  機械的に強制できる → hooks / パス限定 → `.claude/rules/` / 多段階の手順 → `.agents/skills/`
   / それ以外の恒常ルール → この AGENTS.md。
-  hooks・rules・skills は Claude Code の機構。他のCLIにも守らせたい規範は AGENTS.md に書く
+  hooks・rules は Claude Code の機構(skills は `.agents/skills/` で Codex も読む)。他のCLIにも守らせたい規範は AGENTS.md に書く
 - 日付は環境の現在日付を確認して書く。記憶から推測しない
 - 作業の区切り・セッション終了時に `docs/STATUS.md` を更新する(常に「今」だけを書く)
 - 実装・レビュー反映の節目ごとに、関心単位でコミットする。未コミットのまま次の節目へ
@@ -70,8 +70,8 @@
   確認を取る(STATUS.md・生きた文書の通常の上書き更新は該当しない)
 - 曖昧な点は勝手に埋めず質問する。誤りと思えば根拠を添えて反対する
 - テストが通らない状態で「完了」と報告しない。検証をスキップしたときはその旨を明記する
-- `AGENTS.md`・`.claude/`(hooks・rules・skills)の変更は自己権限拡大にあたるため、
-  ユーザーの承認なしに行わない
+- `AGENTS.md`・`.agents/skills/`・`.claude/`(hooks・rules・スキル入口)の変更は自己権限拡大に
+  あたるため、ユーザーの承認なしに行わない
 - 複数エージェントで並列作業するときは git worktree でタスクごとに隔離する
 
 ## ワークスペース配下の場合
@@ -86,4 +86,4 @@
 
 - 100行以下を保つ。各行を「これを消したらAIがミスするか?」で検証し、Noなら削除する
   (例外: multi-agent モジュール導入時は150行まで — 並列運用ルールは全CLIに読ませるため)
-- 手順・チェックリストは `.claude/skills/` へ、パス限定の規約は `.claude/rules/` へ逃がす
+- 手順・チェックリストは `.agents/skills/` へ、パス限定の規約は `.claude/rules/` へ逃がす
