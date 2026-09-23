@@ -17,6 +17,8 @@ multi-agent/
 │   ├── check-blocked.sh    # 依存Issueの完了チェック(cron/Actions 両対応・冪等)
 │   ├── spawn-worktree.sh   # Issueをclaimしてworktreeとブランチを自動作成
 │   └── cleanup-worktree.sh # closeされたIssueのworktree・ブランチを掃除
+├── tests/
+│   └── synthetic.sh        # スクリプト3本の合成テスト(gh スタブ + 一時 bare リポジトリ。実 GitHub に触れない)
 └── .github/
     ├── ISSUE_TEMPLATE/     # task.md(実装)/ integration.md(統合・fan-in)
     └── workflows/
@@ -29,9 +31,11 @@ multi-agent/
 # 1. モジュールを対象リポジトリへコピー
 #    (cp -R <dir> <repo>/ はコピー先に同名ディレクトリがあると二重ネストするため、
 #     必ず mkdir -p + 「<dir>/.」の形式で中身をコピーする)
-mkdir -p <repo>/scripts <repo>/.github
+mkdir -p <repo>/scripts <repo>/.github <repo>/tests
 cp -R templates/modules/multi-agent/scripts/. <repo>/scripts/
 cp -R templates/modules/multi-agent/.github/. <repo>/.github/
+cp -R templates/modules/multi-agent/tests/. <repo>/tests/     # 任意。自環境でスクリプトを検証したいとき
+#    展開後に <repo>/tests/synthetic.sh を1回実行し、全ケース pass を確認する(gh・実リポジトリ不要)
 
 # 2. AGENTS-append.md の「## 並列運用」以下を <repo>/AGENTS.md の末尾に追記する
 #    (追記後は150行以下に収める — 導入時の上限。現行で約150行なので wc -l で確認する)
@@ -53,7 +57,8 @@ gh issue create --title "認証API実装" --label "todo"
 gh issue create --title "結合テスト" --label "blocked" --body "Depends on: #1"
 ./scripts/spawn-worktree.sh 1        # claim + worktree 作成 → builder が実装
 # PR 作成(本文に Closes #1)→ verifier が lens-review 観点でレビュー → 人間がマージ
-./scripts/cleanup-worktree.sh --force  # close 済み Issue の worktree を掃除
+./scripts/cleanup-worktree.sh          # 削除候補の一覧(作業ツリー・Git 参照・GitHub 状態を変えない)
+./scripts/cleanup-worktree.sh --force  # close 済み Issue の worktree を掃除(prune・fetch はこのときだけ)
 ```
 
 ### 中断・再開・失敗からの回収
