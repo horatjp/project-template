@@ -1,5 +1,5 @@
 #!/bin/bash
-# check-secrets.sh — シークレット検出ゲート(PreToolUse フック)
+# check-credentials.sh — シークレット検出ゲート(PreToolUse フック)
 #
 # 目的: Write / Edit で書き込もうとしている内容に認証情報らしき文字列
 #       (AWSキー・各種APIトークン・秘密鍵ブロック等)が含まれていたらブロックする。
