@@ -6,7 +6,8 @@
 
 1. `docs/STATUS.md`(現在地)と `docs/learnings.md`(失敗と学び)を読む
    (テンプレートのまま未記入なら初期化がまだ — ヒアリングで `docs/requirements.md` を作り、
-   `docs/PROJECT.md` と `docs/STATUS.md` を初期化するところから始める)
+   `docs/PROJECT.md` と `docs/STATUS.md` を初期化するところから始める)。STATUS は `git log`・未コミット
+   差分と照合し、未反映の進捗があれば補う。承認・検証済み・停止の状態は git から推測しない(並列運用中は Issue が正)
 2. 着手するタスクに対応するスペックが `changes/` にあればそれを読む(`_template/`・`archive/` は対象外)
 3. 既存の設計・方針に関わる変更の前に、`docs/decisions/`・`docs/knowledge/`(いずれも
    `_template.md` は除く)・`docs/` の生きた文書(requirements.md・schema.md 等)を
@@ -61,7 +62,8 @@
   skills は `.agents/skills/<name>/` に置き、`.claude/skills/<name>` へ symlink する(Claude Code はこちらだけを読む)。
   hooks を持たない CLI にも守らせたい規範は AGENTS.md に書く
 - 日付は環境の現在日付を確認して書く。記憶から推測しない
-- 作業の区切り・セッション終了時に `docs/STATUS.md` を更新する(常に「今」だけを書く)
+- 作業の区切りで `docs/STATUS.md` を更新する(常に「今」だけを書く)。次の一手が変わる変更では同じコミットに
+  含め、セッション終了を待たない(並列運用中の builder は共有 STATUS を触らず Issue/PR に書く)
 - 実装・レビュー反映の節目ごとに、関心単位でコミットする。未コミットのまま次の節目へ
   進まない(リポジトリ作成直後の初期コミットを含む)
 
@@ -84,7 +86,8 @@
 ワークスペースの `AGENTS.md` を自動では読まない — セッション開始時に `../../AGENTS.md`(このファイル基準)を読む。
 打ち合わせ・事業判断・運営の記録はワークスペース側(`journal/`・`docs/`)、
 このリポジトリの `docs/` には技術的な記録だけを書く。
-リポジトリの状況が進行中案件に影響したら、ワークスペースの `STATUS.md` も更新し、
+リポジトリの状況が進行中案件に影響したら、ワークスペースの `STATUS.md` のポインタ・案件側の次の一手も
+更新し(作業の詳細はこのリポジトリの `docs/STATUS.md` が正)、
 節目(実装完了・レビュー完了など)はワークスペースの `journal/` にも1行残す。
 
 ## このファイルの保守
