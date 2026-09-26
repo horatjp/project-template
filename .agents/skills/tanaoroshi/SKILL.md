@@ -29,7 +29,7 @@ description: >
    - `draft` のまま動きが無い → ユーザー承認を取って `stable` 化、または破棄を提案
 2. **learnings の昇格** — `docs/learnings.md` を読み、繰り返し効いている学びを
    昇格候補として提案する: 機械的に強制できる → hooks / パス限定 → `.claude/rules/` /
-   多段階の手順 → `.agents/skills/` / それ以外の恒常ルール → AGENTS.md。
+   多段階の手順 → `.agents/skills/`(+ `.claude/skills/` の symlink)/ それ以外の恒常ルール → AGENTS.md。
    昇格が承認されたら learnings 側のエントリ末尾に昇格先を追記する(本文は残す。一方通行)。
    multi-agent 導入済みなら `docs/learnings/*.md`(1エントリ1ファイル)が統合されずに
    残っていないかも見る

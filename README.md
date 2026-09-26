@@ -37,7 +37,8 @@ CLIコーディングAI全般に対応する。
 変更管理は「変更を一級市民にする」方針で、スペック必須の変更(新機能 / 公開インターフェース
 の変更 / 既存の決定を覆す変更)だけ `changes/` でスペック駆動にする
 (proposal → 承認 → design → tasks → 実装)。バグ修正・微修正には強制しない。
-承認ゲートは指示ではなく hooks で機械的に強制する(後述)。
+承認前に design・tasks を書かせないゲートは、指示ではなく hooks で機械的に強制する
+(実装そのものは止めない。後述)。
 
 ### 3. ナレッジに信頼度を持たせる — AIは古い・未検証の文書にも自信満々に従う
 
@@ -60,7 +61,7 @@ actor 表記(`agent:<tool>@<role>` / `human:<id>`)と日付(YYYY-MM-DD)は OKF �
 ```
 project-workspace/
 ├── AGENTS.md              # ワークスペース層の運用ルール(まず読む)
-├── CLAUDE.md              # → AGENTS.md への symlink(Claude Code 用)
+├── CLAUDE.md              # `@AGENTS.md` の1行だけ(Claude Code 用の入口。下記)
 ├── STATUS.md              # 現在地(進行中・open な宿題・次の一手)
 ├── journal/               # 時系列ログ: 日誌・議事録(YYYY-MM-DD.md、追記専用。ため方は同README)
 ├── docs/                  # 主題別の生きた文書(要件・関係者情報など)
@@ -76,7 +77,7 @@ project-workspace/
     ├── modules/
     │   └── multi-agent/   # 追加モジュール: Issue駆動の並列実行(必要になったら導入。同README参照)
     └── repo/              # リポジトリ層テンプレート(repos/ に新規リポジトリを作るときコピー)
-        ├── AGENTS.md      # 正典。100行以下を維持(+ CLAUDE.md symlink)
+        ├── AGENTS.md      # 正典。100行以下を維持(+ `@AGENTS.md` だけの CLAUDE.md)
         ├── changes/       # 変更スペック(大きい変更のみ proposal → design → tasks)
         ├── scripts/       # hooks 用スクリプト(承認ゲート・認証情報検出・自己テスト)
         ├── .codex/hooks.json  # Codex CLI 用の hooks 設定(同じスクリプトを登録)
@@ -144,7 +145,7 @@ dangling になるため、リポジトリ側 `.gitignore` で除外するか(se
 ## hooks — 承認ゲートと認証情報検出(同梱済み・既定で有効)
 
 機械的に強制したいルールは AGENTS.md に書かず hooks にする(AGENTS.md の指示は
-アドバイザリだが、hooks は確実に実行される)。ひとつめが**承認ゲート** —
+アドバイザリだが、hooks は登録した経路では決定的に実行される)。ひとつめが**承認ゲート** —
 proposal の承認チェックが未記入のまま design.md / tasks.md を書こうとしたらブロックする
 PreToolUse フック(ドライランで、指示だけではこのゲートが素通りできることを確認済み)。
 
@@ -172,11 +173,17 @@ python3 が必要で、どちらも無ければ検査不能として理由を表
 `scripts/hooks-selftest.sh` が両形式の合成入力で挙動を検証する(実 CLI は不要)。
 
 スタックが決まったら、フォーマット・lint・テストゲートも同様に
-`.claude/settings.json` へ追記して hooks 化する。
+`.claude/settings.json` と `.codex/hooks.json` の両方へ追記して hooks 化する。
 
-**Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読むため、追加設定なしで
-両層の運用ルールが適用される。スキルは `.agents/skills/` に置いてあるため Codex も
-自動発見する(`.claude/skills/` はその symlink)。承認ゲート・認証情報検出の hooks も
+**Claude Code で使う場合**: 両層の `CLAUDE.md` は `@AGENTS.md` の1行だけで、AGENTS.md を取り込む。
+Claude Code は v2.1.277 以降 AGENTS.md を直接読めるが、作業ディレクトリか祖先に CLAUDE.md があると
+既定では AGENTS.md を読まない。symlink ではなく import 1行の実ファイルにすることで、バージョンや
+symlink 非対応の環境(Windows 等)に関係なく同じ規則が読まれる。Claude 固有の注記が要ればこのファイルに足す。
+
+**Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読む。ただし探索範囲はプロジェクトルート
+(通常は git root)からカレントディレクトリまでなので、`repos/` 配下(独立した git)で起動すると
+ワークスペースの `AGENTS.md` は自動では読まれない — リポジトリ層 `AGENTS.md` が明示的に読むよう
+指示している。スキルは `.agents/skills/` に置いてあるため Codex も自動発見する(`.claude/skills/` はその symlink)。承認ゲート・認証情報検出の hooks も
 `.codex/hooks.json` で同じスクリプトが登録されており、初回の信頼確認後に `apply_patch`
 経路を検査する(シェル等の別経路は対象外で、完全な防壁ではない)。ただし `.claude/rules/` は
 Claude Code の機構で、Codex は読まない:

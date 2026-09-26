@@ -65,6 +65,6 @@ codex exec --sandbox read-only --skip-git-repo-check --cd "$PWD" "認証シス�
 
 - 結果はセカンドオピニオンとして参考にする。受け取った指摘は lens-review と同じ3値
   (対応する / 意図した設計として記録 / 見送り+理由)で仕分け、最終判断はユーザーに委ねる
-- Codex は AGENTS.md は読むが hooks は通らない。`workspace-write` で書かせた変更は
-  承認ゲート・シークレット検出を経ていないため、diff を確認してから取り込む
+- Codex の hooks(`.codex/hooks.json`)が検査するのは、プロジェクトを信頼済みのときの `apply_patch` による
+  編集だけ(シェル経由の書き込みは対象外)。`workspace-write` で書かせた変更は diff を確認してから取り込む
 - `read-only` モードではファイルの変更は行われない
