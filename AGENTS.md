@@ -30,6 +30,7 @@
    ファイル名と description で走査し、関係する決定を読む
 4. `repos/` 配下のリポジトリで作業する場合は、そのリポジトリの `AGENTS.md` を読んで従う
    (本ファイルのルールも併せて適用され、重複時はリポジトリ側が優先)
+5. `docs/rules/` に、触るパスを対象とする規約があれば先に読む(書式は `templates/repo/docs/rules/README.md`)
 
 ## 3. 記録の境界
 
@@ -37,7 +38,7 @@
 |---|---|
 | 出来事・打ち合わせの議事録 | `journal/`(書式は `_template.md`。「後で書く」はしない) |
 | 宿題が出た・片付いた | `STATUS.md` の宿題欄を更新(journal にも記録として残す) |
-| 重要な事業・運営判断(後から参照する) | `docs/decisions/` に決定記録 + journal に1行(軽い決定は journal のみ) |
+| 後の作業が前提にする事業・運営判断 | `docs/decisions/` に決定記録(軽いものは背景と決定の2節で可)+ journal に1行。前提にならない判断は journal のみ |
 | リポジトリ横断の技術決定・リポジトリがまだ無い時期の技術選定 | `docs/decisions/`(該当リポジトリができたら移す) |
 | 受領・作成したファイル | `materials/` に `YYYY-MM-DD-<topic>.<ext>`(journal からリンクし、出所を1行残す。PDF等は受領時にAI可読の同名 `.md` を併置 — 方法は `materials/README.md`) |
 | リポジトリ横断・事業側の要件(`docs/requirements.md`)・関係者情報 | `docs/`(生きた文書として上書き更新。frontmatter 不要。要件をどちらの層に書くかの判断基準は hearing スキル「記録」節) |
@@ -45,8 +46,8 @@
 | 技術的な決定・コードや技術の学び・変更スペック | 該当リポジトリの `docs/`・`changes/` |
 | `repos/` 配下の節目(実装完了・レビュー完了など) | `journal/` に1行(リポジトリ側の記録へリンク。詳細はリポジトリ側) |
 
-`docs/decisions/` の読み書きは各リポジトリと同じルール(OKF互換 frontmatter・verified の
-自己検証禁止・deprecated と stale_after 超過は判断根拠にしない・不備があっても止めず報告)。
+`docs/decisions/` の読み書きは各リポジトリと同じルール(OKF互換 frontmatter・stable=ユーザー承認済みを根拠に
+する・verified の自己検証禁止・deprecated と stale_after 超過は判断根拠にしない・不備があっても止めず報告)。
 `docs/` 直下の生きた文書(要件・関係者情報など)は frontmatter 不要で、上書き更新する。
 
 ## 4. 安全

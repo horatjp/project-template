@@ -12,9 +12,10 @@
 **Root Cause**: なぜ起きたか
 **Prevention**: 次回から具体的に何をする/しない
 
-昇格(規範に育ったらユーザー承認を得て移し、エントリ末尾に昇格先を追記):
+昇格(規範に育ったらユーザー承認を得て移し、エントリは `→ 昇格: <昇格先>(YYYY-MM-DD)` の1行に畳む。
+毎セッション読むファイルなので、昇格済みの本文は残さない。経緯は git と昇格先に残る):
 - 機械的に強制できる → hooks(.claude/settings.json・.codex/hooks.json)
-- 特定パス限定 → .claude/rules/
+- 特定パス限定 → docs/rules/(どの CLI でも読める)
 - 多段階の手順として書ける → .agents/skills/<name>/(+ Claude Code 用に .claude/skills/<name> の symlink)
 - 恒常ルール → AGENTS.md
 

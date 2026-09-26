@@ -1,23 +1,7 @@
-# .claude/rules/ — パス限定の規約
+# .claude/rules/ — Claude Code 専用の補助
 
-特定のパス・ファイル種別を触るときだけ適用したい規約をここに置く。
-frontmatter の `paths` にマッチするファイルを扱うときのみロードされるため、
-AGENTS.md を太らせずに規約を増やせる(learnings からの昇格先のひとつ)。
+Claude Code は、frontmatter の `paths` にマッチするファイルを扱うときだけ、ここの規約を自動で読み込む。
+Codex など他の CLI は読まないため、**守らせたい規約の置き場は `docs/rules/`**(どの CLI でも読める)。
+ここは Claude Code だけに効けば十分な補助(Claude 固有の癖への対処など)に限って使う。
 
-書き方(例: `db-migrations.md`):
-
-```markdown
----
-paths:
-  - "db/migrations/**"
----
-
-# DBマイグレーションの規約
-
-- 洗い替え処理は挿入・更新を先に、削除は最後に行う
-- 既存カラムの型変更は必ず新カラム追加 → 移行 → 旧カラム削除の3段階で行う
-```
-
-- 1ファイル1関心事。網羅的な長文にしない
-- ここに置くのは「守らないと壊れる」規約のみ。機械的に検証できるものは
-  hooks(`.claude/settings.json`)のほうが確実
+書き方は Claude Code のドキュメント(memory の path-specific rules)に従う。

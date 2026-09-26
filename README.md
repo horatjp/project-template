@@ -21,7 +21,7 @@ CLIコーディングAI全般に対応する。
 | 例外なく強制するルール | hooks(決定的に実行される唯一の手段) |
 
 両層の `docs/learnings.md`(失敗と学び。リポジトリ層はコードと技術、ワークスペース層は運営)が
-育ったら、hooks / `.claude/rules/` / skills / AGENTS.md へ昇格させる。「学び → 恒常化」の一方通行で、恒常層の肥大化を防ぐ。
+育ったら、hooks / `docs/rules/`(パス限定の規約)/ skills / AGENTS.md へ昇格させる。「学び → 恒常化」の一方通行で、恒常層の肥大化を防ぐ。
 
 ### 2. 運営とコードを同じメンタルモデルで扱う
 
@@ -46,8 +46,9 @@ CLIコーディングAI全般に対応する。
 Google Cloud 発のオープン仕様)を部分採用した方言で、信頼シグナルを機械可読にする:
 
 - `generated`(誰がいつ書いたか)と `verified`(誰が検証したか)を分離する
-- **自己検証は禁止**。信頼度は3段階 — 未検証 → machine-confirmed(書いた本人以外のAIが
-  レビュー)→ human-reviewed(人間がレビュー)
+- 決定記録(decisions)は `status: stable`(=ユーザー承認済み)を信頼の根拠にし、`draft` は参考扱い
+- 事実・調査の記録(knowledge)は `verified` で信頼度を示す — 未検証 → 書いた文脈以外(別セッション・
+  別の AI。別ベンダー推奨)が検証 → 人間が検証。**自己検証は禁止**
 - 本文を変更したら既存の `verified` は削除する(検証は失効する)
 - `stale_after`(鮮度期限)を超えた記録と `deprecated` は判断根拠にしない
 
@@ -86,11 +87,12 @@ project-workspace/
         │   ├── learnings.md   # 失敗と学び(毎セッション必読・100行上限)
         │   ├── PROJECT.md     # 安定した背景情報(オンデマンド)
         │   ├── decisions/     # 決定記録=「なぜ」の記録
-        │   └── knowledge/     # 技術調査・バグ解決・一次資料
+        │   ├── knowledge/     # 再利用する技術調査・バグ解決・一次資料
+        │   └── rules/         # パス限定の規約(該当パスを触る前に読む。どの CLI でも効く)
         ├── .agents/skills/    # リポジトリ固有の手順スキル(正典。Codex も自動発見)
         └── .claude/
             ├── settings.json  # hooks 設定(既定で有効)
-            ├── rules/     # パス限定の規約(該当ファイルを触る時のみロード)
+            ├── rules/     # Claude Code 専用の補助(守らせたい規約は docs/rules/ へ)
             └── skills/    # → ../.agents/skills/ への symlink(Claude Code 用の入口)
 ```
 
@@ -185,8 +187,8 @@ symlink 非対応の環境(Windows 等)に関係なく同じ規則が読まれ�
 ワークスペースの `AGENTS.md` は自動では読まれない — リポジトリ層 `AGENTS.md` が明示的に読むよう
 指示している。スキルは `.agents/skills/` に置いてあるため Codex も自動発見する(`.claude/skills/` はその symlink)。承認ゲート・認証情報検出の hooks も
 `.codex/hooks.json` で同じスクリプトが登録されており、初回の信頼確認後に `apply_patch`
-経路を検査する(シェル等の別経路は対象外で、完全な防壁ではない)。ただし `.claude/rules/` は
-Claude Code の機構で、Codex は読まない:
+経路を検査する(シェル等の別経路は対象外で、完全な防壁ではない)。`.claude/rules/` は
+Claude Code の機構で Codex は読まないため、守らせたい規約は `docs/rules/` に置く:
 
 - 自動発見されない CLI では「`.agents/skills/<name>/SKILL.md` を読んでその方法論で
   進めて」と指示すれば同等に使える

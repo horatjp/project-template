@@ -10,8 +10,8 @@ generated:
   by: agent:<tool-name>@<role>  # 例: agent:claude-code@coder
   at: YYYY-MM-DD
 verified: []            # 空=未検証。書式: [{by: agent:<tool>@reviewer | human:<id>, at: YYYY-MM-DD}]
-                        # 実際にレビューを実施した主体のみ記入。同じ tool-name は role・
-                        # セッションが違っても本人(自己検証=不可)。本文変更時は既存要素を削除
+                        # 実際に中身を検証した主体のみ記入。書いた文脈そのものは不可(自己検証)。
+                        # 別セッション・別の AI・人間なら可(別ベンダー推奨)。本文変更時は既存要素を削除
 ---
 
 # <タイトル>
