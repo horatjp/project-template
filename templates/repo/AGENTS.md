@@ -12,12 +12,9 @@
 3. 既存の設計・方針に関わる変更の前に、`docs/decisions/`・`docs/knowledge/`(いずれも
    `_template.md` は除く)・`docs/` の生きた文書(requirements.md・schema.md 等)を
    ファイル名と description で走査し、関係するものを読む
-4. 関連ファイルだけを読む。全読みしない
-5. `status: deprecated`・`stale_after` 超過の記録は判断根拠にしない(超過を見つけたら
+4. `status: deprecated`・`stale_after` 超過の記録は判断根拠にしない(超過を見つけたら
    更新か deprecated 化を提案する)。`stable` の決定はユーザー承認済みとして根拠にしてよい。`draft` の決定と
    未検証(`verified` なし)の knowledge は参考扱いとし、重要な判断の根拠にする前に検証する
-6. `docs/` に不備(リンク切れ・欠けたフィールド)があっても読み取りを止めない。
-   読める範囲を読み、問題は修正提案として報告する
 
 ## 変更の進め方
 
@@ -47,15 +44,12 @@
   **「今どうなっているか」は生きた文書、「なぜそうしたか」は decisions**
 - 後で再利用する非自明な知見(技術調査の結論・外部仕様の要点)・決定の根拠になった資料・再発し得る
   バグの原因と修正 → `docs/knowledge/` に1件1ファイル(書式は `_template.md`。単発の参照は作業報告で足りる)
-- 方針・技術選定・設計を**決めた** → `docs/decisions/`(書式は `docs/decisions/_template.md`)。
-  `draft` で起こし、ユーザーの承認が確認できたら `stable` へ(承認の出所を本文に1行)。既存の決定を覆すときは、
-  後継が承認され適用が始まった時点で旧記録を `status: deprecated` + `superseded_by` にする
-  (それまで旧記録が現行。将来から適用するなら適用条件・日付を後継の本文に書く)
+- 方針・技術選定・設計を**決めた** → `docs/decisions/`。status(`draft` → ユーザー承認の確認後に `stable`)・
+  既存の決定の覆し方・編集の扱いは `docs/decisions/_template.md` に従う
 - **AI自身の作業のしかたで失敗した** → 修正の前に根本原因を分析し、`docs/learnings.md`
   冒頭のゲートを満たすなら追記してから直す(コード・システム側の不具合は knowledge へ)
-- 記録には `generated` を付ける。`verified` は**実際に中身を検証した主体**だけが付ける(書いた・実装した
-  文脈そのものは不可=自己検証。別セッション・別の AI・人間なら可で、別ベンダーの AI を推奨。架空の検証者を
-  書かない)。本文の内容を変更したら既存の `verified` を削除する(誤字修正は除く)
+- 記録の frontmatter(`generated`・`verified`・`stale_after` 等)は各 `_template.md` に従う。`verified` は
+  **実際に中身を検証した主体**だけが付ける(自己検証・架空の検証者は不可)
 - 学びが**規範に育ったら**昇格する(ユーザーに提案して承認を得る): 機械的に強制できる → hooks(Claude Code・
   Codex に登録済み。編集ツール経由の書き込みだけを検査)/ パス限定 → `docs/rules/` / 多段階の手順 →
   `.agents/skills/<name>/`(+ Claude Code 用に `.claude/skills/<name>` の symlink)/ それ以外 → この AGENTS.md。
