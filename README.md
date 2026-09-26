@@ -63,7 +63,7 @@ actor 表記(`agent:<tool>@<role>` / `human:<id>`)と日付(YYYY-MM-DD)は OKF �
 ```
 project-workspace/
 ├── AGENTS.md              # ワークスペース層の運用ルール(まず読む)
-├── CLAUDE.md              # `@AGENTS.md` の1行だけ(Claude Code 用の入口。下記)
+├── CLAUDE.md              # → AGENTS.md への symlink(Claude Code 用の入口。下記)
 ├── STATUS.md              # 現在地(進行中・open な宿題・次の一手)
 ├── journal/               # 時系列ログ: 日誌・議事録(YYYY-MM-DD.md、追記専用。ため方は同README)
 ├── docs/                  # 主題別の生きた文書(要件・関係者情報など)
@@ -178,10 +178,13 @@ python3 が必要で、どちらも無ければ検査不能として理由を表
 スタックが決まったら、フォーマット・lint・テストゲートも同様に
 `.claude/settings.json` と `.codex/hooks.json` の両方へ追記して hooks 化する。
 
-**Claude Code で使う場合**: 両層の `CLAUDE.md` は `@AGENTS.md` の1行だけで、AGENTS.md を取り込む。
-Claude Code は v2.1.277 以降 AGENTS.md を直接読めるが、作業ディレクトリか祖先に CLAUDE.md があると
-既定では AGENTS.md を読まない。symlink ではなく import 1行の実ファイルにすることで、バージョンや
-symlink 非対応の環境(Windows 等)に関係なく同じ規則が読まれる。Claude 固有の注記が要ればこのファイルに足す。
+**Claude Code で使う場合**: Claude Code は v2.1.277 以降 AGENTS.md を直接読めるが、作業ディレクトリか祖先に
+CLAUDE.md があると既定では AGENTS.md を読まないため、CLAUDE.md を入口に置く。層で方式が違う:
+- ワークスペース層は AGENTS.md への **symlink**。`repos/` 配下で起動したセッションにも祖先として自動で読まれる
+  (`@AGENTS.md` の import にすると、作業ディレクトリ外を指す外部 import として承認ダイアログが要り、
+  未承認のまま非対話で実行すると読まれない)
+- リポジトリ層は `@AGENTS.md` の1行だけの実ファイル。単体 clone や symlink 非対応の環境(Windows 等)でも動く
+- symlink が効かない環境でも、リポジトリ層 AGENTS.md の「`../../AGENTS.md` を読む」指示が予備になる
 
 **Codex CLI で使う場合**: `AGENTS.md` は Codex CLI がネイティブに読む。ただし探索範囲はプロジェクトルート
 (通常は git root)からカレントディレクトリまでなので、`repos/` 配下(独立した git)で起動すると
