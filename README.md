@@ -211,6 +211,13 @@ Claude Code の機構で、Codex は読まない:
 - 複数エージェントを並列で走らせるときは git worktree でタスクごとに隔離する
   (同一ワーキングディレクトリの同時編集は破綻する)
 
+## テンプレートの保守
+
+このテンプレート自身の運営記録(STATUS・journal・レビュー往復の原文)は、main ではなく
+orphan ブランチ [`dev-log`](https://github.com/horatjp/project-template/tree/dev-log) に置いている(テンプレートから作ったプロジェクトに
+保守の経緯を持ち込まないため)。このテンプレートで運営している実例としても読める。
+保守者はワークスペース直下に `git worktree add _devlog dev-log` で展開する(`_devlog/` は git 管理外)。
+
 ## ライセンス
 
 MIT License([LICENSE](LICENSE))

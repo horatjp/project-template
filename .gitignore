@@ -14,3 +14,6 @@ repos/*
 
 # 公開しないローカルアーカイブ
 _archive/
+
+# テンプレート自身の運営記録(dev-log ブランチの worktree。README「テンプレートの保守」参照)
+_devlog/
