@@ -108,6 +108,11 @@ run "再実行(todo + 既存 worktree)で claim 失敗 → 停止" 1 "再claim" 
 run "再実行でも依存 OPEN なら再開案内を出さない" 1 "依存Issue #2" -- env GH_LABELS="in-progress" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/spawn-worktree.sh 5
 enter_fresh_repo; git branch issue-6-fix-login-bug && git worktree add -q ../other issue-6-fix-login-bug || die "占有 fixture の準備に失敗"
 run "既存ブランチが別 worktree で占有中なら claim 前に停止" 1 "別の worktree" -- env GH_LABELS="todo" ./scripts/spawn-worktree.sh 6
+# Issue 雛形をそのまま本文にしたとき、記入例(コメント内)を依存として拾わないこと
+TASK_TEMPLATE="$HERE/../.github/ISSUE_TEMPLATE/task.md"
+[ -f "$TASK_TEMPLATE" ] || die "Issue 雛形が見つからない: $TASK_TEMPLATE"
+enter_fresh_repo
+run "雛形のままの本文は依存なしで着手できる" 0 "worktree作成完了" -- env GH_LABELS="todo" GH_BODY="$(cat "$TASK_TEMPLATE")" ./scripts/spawn-worktree.sh 7
 
 echo "cleanup-worktree.sh"
 enter_fresh_repo
@@ -155,6 +160,9 @@ grep -q "remove-label in-progress" "$GH_LOG" && grep -q "add-label blocked --add
 : > "$GH_LOG"
 run "todo の依存が再オープン → blocked のみ" 0 "blockedに戻します" -- env GH_LIST_TODO=9 GH_LABELS="todo" GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
 grep -q "needs-human" "$GH_LOG" && fail "  todo の差し戻しに needs-human が付いた" "$(cat "$GH_LOG")" || ok "  todo の差し戻しは blocked のみ"
+: > "$GH_LOG"
+run "雛形のままの本文の todo は blocked に戻さない" 0 "" -- env GH_LIST_TODO=9 GH_LABELS="todo" GH_BODY="$(cat "$TASK_TEMPLATE")" ./scripts/check-blocked.sh
+grep -q "issue edit" "$GH_LOG" && fail "  記入例を依存として扱った" "$(cat "$GH_LOG")" || ok "  編集なし"
 : > "$GH_LOG"; rm -f "$GH_LOG.labels"
 run "差し戻し時の2回目のラベル取得失敗 → スキップ(編集なし)" 0 "再取得に失敗" -- env GH_LIST_INPROGRESS=8 GH_LABELS="in-progress" GH_LABELS_OK_CALLS=1 GH_BODY="Depends on: #2" GH_STATE_2=OPEN ./scripts/check-blocked.sh
 grep -q "issue edit" "$GH_LOG" && fail "  取得失敗なのに編集した" "$(cat "$GH_LOG")" || ok "  編集なし"
