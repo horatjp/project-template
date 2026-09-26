@@ -214,9 +214,20 @@ Claude Code の機構で、Codex は読まない:
 ## テンプレートの保守
 
 このテンプレート自身の運営記録(STATUS・journal・レビュー往復の原文)は、main ではなく
-orphan ブランチ [`dev-log`](https://github.com/horatjp/project-template/tree/dev-log) に置いている(テンプレートから作ったプロジェクトに
-保守の経緯を持ち込まないため)。このテンプレートで運営している実例としても読める。
-保守者はワークスペース直下に `git worktree add _devlog dev-log` で展開する(`_devlog/` は git 管理外)。
+orphan ブランチ [`dev-log`](https://github.com/horatjp/project-template/tree/dev-log) に置いている
+(テンプレートから作ったプロジェクトに保守の経緯を持ち込まないため)。このテンプレートで運営している実例としても読める。
+
+テンプレート本体を保守するとき(AI 向けの手順を含む):
+
+- AI セッションは main のワークスペース直下で起動する。`_devlog/` は記録の置き場で、そこでは起動しない
+  (独立した worktree なので、そこで起動すると AGENTS.md・スキルが読まれない)
+- `_devlog/` が無ければ展開する。ローカルに dev-log ブランチがあれば `git worktree add _devlog dev-log`、
+  無ければ `git fetch origin refs/heads/dev-log:refs/remotes/origin/dev-log && git worktree add -b dev-log _devlog origin/dev-log`
+  (single-branch clone でも動く形)。取得できなければ初期化を始めず、ユーザーに状況を報告する
+- STATUS・journal・materials は `_devlog/` 側を読み書きし、`_devlog/` の中で dev-log ブランチにコミットする
+  (push は `git push origin dev-log` と明示する)。
+  main の STATUS・journal・materials は配布用の雛形のまま触らない(session-end も同じ)
+- 設計判断の原本などは、main 側のローカル資料 `_archive/`(git 管理外)にある
 
 ## ライセンス
 

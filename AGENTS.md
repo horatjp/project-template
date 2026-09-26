@@ -15,14 +15,15 @@
 | `repos/` | コードリポジトリ。各リポジトリは独立した git で、個別の `AGENTS.md` に従う |
 | `.agents/skills/` | ワークスペース共有スキル(正典。`.claude/skills/` は Claude Code 用の symlink) |
 | `templates/` | 新規リポジトリ用テンプレート(`repo/`)と追加モジュール(`modules/`)。運用中は触らない |
-| `_archive/`・`_devlog/` | テンプレート保守者のローカル資料(git 管理外、clone には無い)。テンプレート自身の運営記録(STATUS・journal)は `_devlog/`(`dev-log` ブランチの worktree)、設計判断の原本は `_archive/` と `README.md` 設計思想節 |
+| `_archive/`・`_devlog/` | テンプレート保守者のローカル資料(git 管理外、clone には無い)。`_devlog/` はテンプレート自身の運営記録(`dev-log` ブランチの worktree)、`_archive/` は設計判断の原本などのローカル資料 |
 
 ## 2. セッション開始手順
 
 1. `STATUS.md`(現在地)と `docs/learnings.md`(失敗と学び)を読む。必要なら直近の `journal/`
    1〜2件(`_template.md` は除く)で経緯を補う。STATUS が雛形のまま未記入なら初期化がまだ —
-   ユーザーにプロジェクトの概要を聞いて journal の初回エントリと STATUS を作るところから始める
-   (`_devlog/` があるテンプレート保守環境では、`_devlog/` の STATUS・journal を読む)
+   ユーザーにプロジェクトの概要を聞いて journal の初回エントリと STATUS を作るところから始める。
+   ただしテンプレート本体(origin が horatjp/project-template)の保守なら初期化せず、STATUS・journal・
+   materials の読み書きとコミットを README「テンプレートの保守」に従い `_devlog/` で行う(session-end 等も同じ)
 2. 事業・運営に関わる提案・変更の前に、`docs/decisions/`(`_template.md` は除く)を
    ファイル名と description で走査し、関係する決定を読む
 3. `repos/` 配下のリポジトリで作業する場合は、そのリポジトリの `AGENTS.md` を読んで従う
