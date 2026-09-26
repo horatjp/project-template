@@ -8,7 +8,7 @@
 
 - 2026-09-26 のテンプレート全体見直し(3系統レビューの統合メモ: ローカル `_archive/2026-09-26-review/synthesis.md`)
   - A 群(事実誤り・バグ・矛盾)と CLAUDE.md の `@AGENTS.md` 化: 完了・コミット済み(main)
-  - B 群(運営記録を dev-log へ移す): 実装済み、Codex verifier レビュー待ち
+  - B 群(運営記録を dev-log へ移す): 完了・Codex 承認・コミット済み(main 9284081・後続の fix、dev-log)
   - C〜F 群: 未着手。論点ごとにユーザーと相談して決める(ユーザー方針)
 
 ## 宿題(open)
