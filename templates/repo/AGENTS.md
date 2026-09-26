@@ -47,7 +47,8 @@
   `docs/knowledge/` に1件1ファイル(書式は `docs/knowledge/_template.md`)
 - 方針・技術選定・設計を**決めた** → `docs/decisions/`(書式は `docs/decisions/_template.md`)。
   重要な決定は `draft` で起こしてユーザー承認後に `stable` へ。既存の決定を覆すときは、
-  その場で旧記録を `status: deprecated` + `superseded_by` にする
+  後継が承認され適用が始まった時点で旧記録を `status: deprecated` + `superseded_by` にする
+  (それまで旧記録が現行。将来から適用するなら適用条件・日付を後継の本文に書く)
 - **AI自身の作業のしかたで失敗した** → 修正の前に根本原因を分析し、`docs/learnings.md`
   冒頭のゲートを満たすなら追記してから直す(コード・システム側の不具合は knowledge へ)
 - 記録には `generated` を付ける。`verified` は**実際にレビューを実施した主体**だけが付ける
