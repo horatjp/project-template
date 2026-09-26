@@ -24,9 +24,9 @@ AGENTS.md 末尾に追記する(このコメントと最上部の見出しは写
 ### タスクの単位と Issue ライフサイクル
 
 - **change は承認の単位、Issue は実行の単位。** スペック必須の変更は `changes/<name>/` で
-  承認を得てから、tasks の項目ごとに Issue を切る(Issue 本文の「対応スペック」欄で
-  `changes/<name>/tasks.md` の項番を参照。スペック不要な変更はその理由を書く)。
-  実行状態の正典は Issue。tasks のチェックは scribe が Issue の完了を見て反映する。
+  承認を得てから、tasks(軽量区分は proposal.md の実装メモ)の項目ごとに Issue を切る(Issue 本文の
+  「対応スペック」欄でその項番を参照。スペック不要な変更はその理由を書く)。実行状態の正典は Issue。
+  tasks・実装メモのチェックと完了報告は scribe が Issue の完了を見て反映する。
   親 change の完了・archive は、全 Issue のマージ後に統合検証と共有文書の更新が済んでから
 - 1 実装タスク = 1 GitHub Issue = 1 git worktree = 1 ブランチ = 1 PR
 - 担当範囲は Issue 本文にパスの glob で明記し、範囲外のファイルは変更しない
