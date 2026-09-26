@@ -3,7 +3,7 @@
 ## セッション開始
 
 1. `docs/STATUS.md`(現在地)と `docs/learnings.md`(失敗と学び)を読む
-   (テンプレートのまま未記入なら初期化がまだ — ヒアリングで `docs/requirements.md` を作り、
+   (`docs/STATUS.md` がテンプレートのまま未記入なら初期化がまだ — ヒアリングで `docs/requirements.md` を作り、
    `docs/PROJECT.md` と `docs/STATUS.md` を初期化するところから始める)。STATUS は `git log`・未コミット
    差分と照合し、未反映の進捗があれば補う。承認・検証済み・停止の状態は git から推測しない(並列運用中は Issue が正)
 2. 着手するタスクに対応するスペックが `changes/` にあればそれを読む(`_template/`・`archive/` は対象外)
