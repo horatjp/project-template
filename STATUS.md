@@ -13,10 +13,14 @@
   - D 群(ナレッジループ): D1〜D5 完了・Codex 承認・コミット済み(main)。D6(鮮度チェックスクリプト)はユーザー判断で見送り
   - E 群(過剰指示・儀式の削減): E1〜E5 完了・Codex 承認・コミット済み(main)
   - F 群(不足の追加): F1・F4・F6 完了・Codex 承認・コミット済み(main)。F3 は見送り、F2・F5 は実案件で必要になったら
+- 2026-10-09 multi-agent モジュールを削除(main 34cd66d・b9e263e)。完了
 
 ## 宿題(open)
 
 <!-- 形式: - [ ] 内容 / 担当 / 期限 / 出所: journal/YYYY-MM-DD.md -->
+
+- [ ] ~/projects/okayu など他プロジェクトの templates/ 複製の multi-agent 整理 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
+- [ ] dotfiles 側 CLAUDE.md の multi-agent 言及の修正 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
 
 
 ## 次の一手
@@ -25,5 +29,5 @@
 
 ## 最終更新
 
-- 日付: 2026-09-26
+- 日付: 2026-10-09
 - 更新者: Claude Code(template-cc)
