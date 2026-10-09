@@ -76,8 +76,6 @@ project-workspace/
 ├── .devcontainer/         # 汎用開発コンテナ(コンテナ運用しない場合は無視してよい。同README参照)
 ├── repos/                 # コードリポジトリ置き場(git 管理外。各リポジトリが独立した git)
 └── templates/
-    ├── modules/
-    │   └── multi-agent/   # 追加モジュール: Issue駆動の並列実行(必要になったら導入。同README参照)
     └── repo/              # リポジトリ層テンプレート(repos/ に新規リポジトリを作るときコピー)
         ├── AGENTS.md      # 正典。100行以下を維持(+ `@AGENTS.md` だけの CLAUDE.md)
         ├── changes/       # 変更スペック(大きい変更のみ proposal → design → tasks)
