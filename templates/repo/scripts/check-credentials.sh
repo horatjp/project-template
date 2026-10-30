@@ -17,12 +17,17 @@
 #       シェル等の別経路(echo > file 等)は対象外 — 完全な防壁ではなく編集ツール経路の補助。
 #
 # 互換性: macOS(BSD)/ Linux(GNU)両対応。JSON の解析は jq → python3 の順で使う。
-#       どちらも無い場合: Claude 形式は入力全体を走査(安全側。旧値の置換編集までブロックし得る)、
-#       apply_patch 形式は追加行だけを取り出せないため、理由を表示してブロックする(検査不能≠対象外)。
+#       どちらも無い場合は両形式とも理由を表示して exit 2 でブロックする(検査不能≠対象外)。
 
 set -euo pipefail
+# 想定外の終了も hook の非ブロックエラーにせず、検査不能として理由付きで拒否する。
+trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then echo "シークレット検出: 内部エラー(exit $rc)で検査できないため書き込みをブロックします。" >&2; exit 2; fi' EXIT
 
 input=$(cat)
+[ -n "$input" ] || {
+  echo "シークレット検出: フック入力が空です。検査できないため書き込みをブロックします。" >&2
+  exit 2
+}
 
 # --- JSON から必要なフィールドを取り出す(jq → python3) --------------------------------
 json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)。取り出せなければ非ゼロ
@@ -35,9 +40,12 @@ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)�
   fi
 }
 
-# パーサが無くても tool_name だけは生の JSON から拾う(apply_patch を Claude 形式と誤認しないため)
-tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')") \
-  || tool_name=$(printf '%s' "$input" | sed -nE 's/.*"tool_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
+# 復号できない入力は検査済みと扱わない。入力形式を問わず同じ依存を要求する。
+if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+  echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
+  exit 2
+fi
+tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
 
 if [ "$tool_name" = "apply_patch" ]; then
   patch=$(json_get '.tool_input.command // empty' "d.get('tool_input',{}).get('command','')") || {
@@ -45,7 +53,7 @@ if [ "$tool_name" = "apply_patch" ]; then
     exit 2
   }
   # 追加行(先頭 "+")だけを検査。ファイル追加(*** Add File)の本文も "+" 行で表現される
-  scan=$(printf '%s\n' "$patch" | grep -E '^\+' | sed -E 's/^\+//' || true)
+  scan=$(printf '%s\n' "$patch" | grep -E '^\+' | sed -E 's/^\+//' || [ $? -eq 1 ])
 else
   # Claude Code 形式
   if command -v jq >/dev/null 2>&1; then
@@ -58,8 +66,6 @@ import json,sys
 d=json.load(sys.stdin); t=d.get("tool_input",{}) or {}
 parts=[t.get("content"), t.get("new_string")] + [e.get("new_string") for e in (t.get("edits") or [])]
 print("\n".join(p for p in parts if isinstance(p,str)))' 2>/dev/null) || scan=$input
-  else
-    scan=$input
   fi
 fi
 
@@ -82,7 +88,14 @@ patterns=(
 # grep -q は一致した時点で終了し、長い入力では printf が SIGPIPE(141)になってパイプ全体が
 # 非ゼロ → 検出しても通してしまう。出力を捨てる形で全入力を消費させる(pipefail 下でも安全)
 for pattern in "${patterns[@]}"; do
-  if printf '%s' "$scan" | grep -E -e "$pattern" >/dev/null; then
+  # grep の 1 は不一致、2 以上は検査の失敗。条件式の中でも失敗を握り潰さない。
+  rc=0
+  printf '%s' "$scan" | grep -E -e "$pattern" >/dev/null || rc=$?
+  if [ "$rc" -gt 1 ]; then
+    echo "シークレット検出: grep が失敗(exit $rc)し検査できないため書き込みをブロックします。" >&2
+    exit 2
+  fi
+  if [ "$rc" -eq 0 ]; then
     echo "シークレット検出: 書き込もうとしている内容に認証情報らしき文字列(パターン: $pattern)が含まれています。実値は書かず、環境変数やシークレットマネージャへの参照に置き換えてください。" >&2
     exit 2
   fi
