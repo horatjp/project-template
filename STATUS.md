@@ -23,7 +23,6 @@
 
 - [ ] ~/projects/okayu など他プロジェクトの templates/ 複製の multi-agent 整理 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
 - [ ] dotfiles 側 CLAUDE.md の multi-agent 言及の修正 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
-- [ ] R3-01: PATH 上の grep に実行権限が無いと check-credentials.sh が exit 0 で通る(P3。事前プローブ1行+selftest1件で直る)/ AI / 期限なし / 出所: journal/2026-10-30.md
 
 
 ## 次の一手

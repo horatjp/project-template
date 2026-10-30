@@ -1,0 +1,80 @@
+diff --git a/scripts/check-credentials.sh b/scripts/check-credentials.sh
+index 22e8c3b..c999984 100755
+--- a/scripts/check-credentials.sh
++++ b/scripts/check-credentials.sh
+@@ -45,6 +45,12 @@ if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+   echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
+   exit 2
+ fi
++# grep 自体が動くかを先に確かめる。bash 3.2 では実行権限の無い grep の 126 が `||` の先で 1 に見え、
++# 走査中は「不一致」と区別できないため(値に依存しない固定入力なのでこの影響を受けない)
++printf 'probe' | grep -E -e 'probe' >/dev/null 2>&1 || {
++  echo "シークレット検出: grep を実行できず検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ if [ "$tool_name" = "apply_patch" ]; then
+diff --git a/scripts/hooks-selftest.sh b/scripts/hooks-selftest.sh
+index 68b1485..416941c 100755
+--- a/scripts/hooks-selftest.sh
++++ b/scripts/hooks-selftest.sh
+@@ -82,12 +82,15 @@ for gate in "$A" "$C"; do
+   run "$gate: 空入力 → block(理由表示)" 2 "$gate" ''
+ done
+ # R2-01: grep の不在・実行エラーを、パターン不一致と区別する。
+-NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; mkdir -p "$NO_GREP" "$BAD_GREP"
++# R3-01: 実行権限の無い grep(bash 3.2 では `||` の先で $? が 126 でなく 1 に見え、不一致と区別できない)。
++NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; NOEXEC_GREP="$T/noexec-grep"
++mkdir -p "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"
+ for b in bash sed cat dirname env python3; do
+-  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b"
++  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b" && ln -s "$p" "$NOEXEC_GREP/$b"
+ done
+ printf '#!/bin/bash\nexit 2\n' > "$BAD_GREP/grep"; chmod +x "$BAD_GREP/grep"
+-for grep_path in "$NO_GREP" "$BAD_GREP"; do
++printf '#!/bin/bash\nexit 1\n' > "$NOEXEC_GREP/grep"; chmod -x "$NOEXEC_GREP/grep"
++for grep_path in "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"; do
+   run "grep 異常($grep_path): Claude Write → block(理由表示)" 2 "$C" '{"tool_name":"Write","tool_input":{"content":"harmless"}}' PATH="$grep_path"
+   run "grep 異常($grep_path): apply_patch → block(理由表示)" 2 "$C" "$(patch_json "$T" $'*** Begin Patch\n*** Add File: a.md\n+harmless\n*** End Patch')" PATH="$grep_path"
+ done
+diff --git a/templates/repo/scripts/check-credentials.sh b/templates/repo/scripts/check-credentials.sh
+index 22e8c3b..c999984 100755
+--- a/templates/repo/scripts/check-credentials.sh
++++ b/templates/repo/scripts/check-credentials.sh
+@@ -45,6 +45,12 @@ if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+   echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
+   exit 2
+ fi
++# grep 自体が動くかを先に確かめる。bash 3.2 では実行権限の無い grep の 126 が `||` の先で 1 に見え、
++# 走査中は「不一致」と区別できないため(値に依存しない固定入力なのでこの影響を受けない)
++printf 'probe' | grep -E -e 'probe' >/dev/null 2>&1 || {
++  echo "シークレット検出: grep を実行できず検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ if [ "$tool_name" = "apply_patch" ]; then
+diff --git a/templates/repo/scripts/hooks-selftest.sh b/templates/repo/scripts/hooks-selftest.sh
+index 68b1485..416941c 100755
+--- a/templates/repo/scripts/hooks-selftest.sh
++++ b/templates/repo/scripts/hooks-selftest.sh
+@@ -82,12 +82,15 @@ for gate in "$A" "$C"; do
+   run "$gate: 空入力 → block(理由表示)" 2 "$gate" ''
+ done
+ # R2-01: grep の不在・実行エラーを、パターン不一致と区別する。
+-NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; mkdir -p "$NO_GREP" "$BAD_GREP"
++# R3-01: 実行権限の無い grep(bash 3.2 では `||` の先で $? が 126 でなく 1 に見え、不一致と区別できない)。
++NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; NOEXEC_GREP="$T/noexec-grep"
++mkdir -p "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"
+ for b in bash sed cat dirname env python3; do
+-  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b"
++  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b" && ln -s "$p" "$NOEXEC_GREP/$b"
+ done
+ printf '#!/bin/bash\nexit 2\n' > "$BAD_GREP/grep"; chmod +x "$BAD_GREP/grep"
+-for grep_path in "$NO_GREP" "$BAD_GREP"; do
++printf '#!/bin/bash\nexit 1\n' > "$NOEXEC_GREP/grep"; chmod -x "$NOEXEC_GREP/grep"
++for grep_path in "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"; do
+   run "grep 異常($grep_path): Claude Write → block(理由表示)" 2 "$C" '{"tool_name":"Write","tool_input":{"content":"harmless"}}' PATH="$grep_path"
+   run "grep 異常($grep_path): apply_patch → block(理由表示)" 2 "$C" "$(patch_json "$T" $'*** Begin Patch\n*** Add File: a.md\n+harmless\n*** End Patch')" PATH="$grep_path"
+ done
