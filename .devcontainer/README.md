@@ -27,9 +27,10 @@ VS Code で「Reopen in Container」(または `devcontainer up`)で起動する
   dotfiles でスキルを管理している場合、VS Code の設定
   `"dotfiles.repository": "<user>/dotfiles"` を入れておくと全コンテナに自動適用される
 - **Codex のサンドボックス**: コンテナ内では bubblewrap が user namespace を作れず
-  起動しないことがある(ドライランで確認)。コンテナ自体が隔離境界なので、その場合は
-  サンドボックス無しで実行する(`codex --sandbox danger-full-access`、または
-  `~/.codex/config.toml` で設定)
+  起動しないことがある(ドライランで確認)。サンドボックス無しの実行
+  (`codex --sandbox danger-full-access` 等)へ自動的に切り替えない。コンテナにはワークスペース全体と
+  認証情報(`~/.claude`・`~/.codex`)があり、共有ワークスペースへの書き込みと外部通信が無制限になり得る。
+  下記ファイアウォール節も併せて確認したうえで、利用するかは人が判断する
 
 ## スタックが決まったら
 

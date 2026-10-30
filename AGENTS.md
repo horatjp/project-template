@@ -14,7 +14,7 @@
 | `materials/` | ファイル原本(受領・作成した資料。PDF・スライド等) |
 | `repos/` | コードリポジトリ。各リポジトリは独立した git で、個別の `AGENTS.md` に従う |
 | `.agents/skills/` | ワークスペース共有スキル(正典。`.claude/skills/` は Claude Code 用の symlink) |
-| `templates/` | 新規リポジトリ用テンプレート(`repo/`)と追加モジュール(`modules/`)。運用中は触らない |
+| `templates/` | 新規リポジトリ用テンプレート(`repo/`)。運用中は触らない |
 | `_archive/`・`_devlog/` | テンプレート保守者のローカル資料(git 管理外、clone には無い)。`_devlog/` はテンプレート自身の運営記録(`dev-log` ブランチの worktree)、`_archive/` は設計判断の原本などのローカル資料 |
 
 ## 2. セッション開始手順
@@ -58,7 +58,7 @@
   扱うため private リポジトリで運用する(public にしない)
 - 不可逆な操作(削除・復元不能な上書き・外部への送信・課金・公開)の前は必ず停止し、
   ユーザーの確認を取る(STATUS.md・生きた文書の通常の上書き更新は該当しない)
-- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)の変更は自己権限拡大にあたるため、ユーザーの承認なしに行わない
+- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)・hooks が参照するスクリプト(`scripts/check-proposal-approved.sh`・`scripts/check-credentials.sh`)の変更は自己権限拡大にあたるため、ユーザーの承認なしに行わない
 - 同意ばかりしない。曖昧な点は勝手に埋めず質問する。誤りと思えば根拠を添えて反対する
 
 ## 5. 保守
