@@ -11,24 +11,24 @@
 
 契約 → 境界値テスト → 実装の順序、副作用の分離、「テストは書いた条件しか保証しない」「適用は業務ルールに限る」の歯止めは、
 AGENTS「変更の進め方」「記録」「安全」と矛盾しない。置き場所(リポジトリ層のみ)も妥当。P1 は無い。
-直すべきは適用範囲と書き先の明示(J-03、J-04)だけで、新しい必須文書は増やさない。
+直すべきは適用範囲と書き先の明示(J-05、J-06)だけで、新しい必須文書は増やさない。
 
 ## 2. 合意した指摘(直す)
 
 | ID | 重さ | 出所 | 場所 | 何が起きるか | 直し方(最小) |
 |---|---|---|---|---|---|
 | J-01 | P2 | F-05 | `templates/repo/AGENTS.md:80-81`、ws `AGENTS.md:61` | 自己権限拡大の列挙に hooks の実体が無い。settings.json / hooks.json は `scripts/check-*.sh` を呼ぶだけなので、誤検知時に AI がスクリプト側を「バグ修正」でき、承認ゲート・シークレット検出が黙って弱まる | 両層の列挙に「hooks が参照するスクリプト(`scripts/check-proposal-approved.sh`・`check-credentials.sh`)」を加える。scripts/ 全体ではなくこの 2 本に限定し、通常の開発を止めない |
-| J-02 | P2 | A-04 | `templates/repo/AGENTS.md:82,84-93`、`README.md:141-144,215-216` | 並列作業は worktree 必須だが作成位置の条件が無い。`repos/<name>/` の外(`.worktrees/` や別ディレクトリ)に作ると `../../AGENTS.md` が解決せず、ワークスペース規範(記録先・leader・事業判断)を読めないまま作業・再開する | AGENTS:82 に「worktree は `repos/` 直下(例 `repos/<name>-<task>`)に作る」を足す。README の worktree 注意(skills の消失)にも AGENTS の件を併記 |
+| J-02 | P2 | A-04 | `templates/repo/AGENTS.md:82,84-93`、`README.md:141-144,215-216` | 並列作業は worktree 必須だが作成位置の条件が無い。`repos/<name>/` の外(`.worktrees/` や別ディレクトリ)に作ると `../../AGENTS.md` が解決せず、ワークスペース規範(記録先・leader・事業判断)を読めないまま作業・再開する | AGENTS:82 に「ワークスペース配下のリポジトリの worktree は、そのワークスペースの `repos/` 直下(例 `repos/<name>-<task>`)に作る」を足す(単体リポジトリには強制しない)。README の worktree 注意(skills の消失)にも AGENTS の件を併記 |
 | J-03 | P2 | A-02 | `scripts/check-credentials.sh:51-63`、`scripts/check-proposal-approved.sh:78-84`(両層同一)、`README.md:172-173` | jq・python3 がどちらも無いとき、apply_patch 形式は理由付き exit 2 だが Claude 形式は生 JSON の正規表現走査へ退避し「検査済み」として通す。JSON の Unicode エスケープ等、復号しないと見えない表現は検出・パス判定を逃れる。README は「どちらも無ければブロック」と説明しており、説明と実挙動が不一致 | 推奨: パーサ不在は両形式とも理由付き exit 2 に統一し(「検査不能 ≠ 対象外」)、依存(jq または python3)を README と `docs/PROJECT.md` 開発環境節に明示。selftest の「パーサ無し + Claude Write 対象外 → pass」ケースを改め、復号が要る合成 JSON の回帰ケースを足す。別案(README だけ実挙動へ合わせる)は、検査不能な表現が通る残余リスクを受容する選択として明記する |
 | J-04 | P2 | A-03 | `scripts/check-proposal-approved.sh:58-74,93-101`(両層同一) | 承認済み proposal がある状態で、同一 apply_patch 内に「承認を `[ ]` に戻す proposal 更新」と「同じ change の design/tasks 更新」を含めると、ゲートはディスク上の旧 `[x]` を読んで通す。既存 selftest は「同一パッチ内の新規承認は根拠にしない」を拒むが、その逆(同一パッチ内の失効)は扱っていない | 同一パッチで同じ change の proposal と design/tasks を同時に触るパッチはブロックし、proposal の変更と再承認を先に確定させる。selftest に回帰ケースを追加。受け取った 1 操作の中に見えている矛盾だけを止めるので、ステートレスな事前ゲートのまま実現できる |
-| J-05 | P3 | F-03=A-06 | `templates/repo/.agents/skills/lens-review/SKILL.md:26` | correctness は全変更種別の必須レンズなのに、追加した契約・副作用の検査行に適用範囲の限定が無い。UI 配線や文書のレビューで、適用外のコードに契約テスト・純粋化を要求し得る | 「業務ルール・計算を担うコードでは」の限定を検査行に入れる(design の「なし」には依存させない — 軽量は design を持たないため) |
+| J-05 | P3 | F-03=A-06 | `templates/repo/.agents/skills/lens-review/SKILL.md:26` | correctness は UI 等の変更や文書のレビューにも使われるのに、追加した契約・副作用の検査行に適用範囲の限定が無い。UI 配線や文書のレビューで、適用外のコードに契約テスト・純粋化を要求し得る | 「業務ルール・計算を担うコードでは」の限定を検査行に入れる(design の「なし」には依存させない — 軽量は design を持たないため) |
 | J-06 | P3 | F-01 | `templates/repo/AGENTS.md:39-40`、`changes/_template/proposal.md:42-45` | 「実装の前に契約を書き出し」の受け皿が標準(design 契約節)にしか無く、軽量・スペック不要の変更で AI の書き先が割れる(省略 / 実装メモ / コメント)。破綻ではなく判断揺れ | AGENTS の 1 項目目に書き先を短く添える:「書き先は design の契約節。軽量は proposal の実装メモ、スペック不要の変更はテスト名・docstring」。design.md の「主要な」は残す(全小関数の文書化は求めない)。新文書は増やさない |
 | J-07 | P3 | F-08 | `templates/repo/AGENTS.md:23` | 「active な決定記録」が未定義。decisions の status は draft / stable / deprecated で、draft を覆す変更がスペック必須か判断が割れる | 「`stable` な決定記録を覆す変更」に置き換え、README:37-38 の「既存の決定」も揃える |
 | J-08 | P3 | F-13=A-07 | ws `AGENTS.md:17` | `templates/modules/` は `34cd66d` で削除済み(`git ls-files` に無し)。毎セッション読む構成表が存在しないディレクトリを案内する(`b9e263e` の言及除去の取りこぼし) | 「`templates/` \| 新規リポジトリ用テンプレート(`repo/`)。運用中は触らない」にする |
 | J-09 | P3 | F-07=A-08 | `templates/repo/AGENTS.md:97` | 箇条書き 2 件が 1 行に結合(`b9e263e` 由来)。規範が行末に埋もれ、行数も 1 行過小(実質 98 行)。全新規リポジトリにコピーされる | 「削除する」の後で改行する(98 行。上限内) |
 | J-10 | P3 | A-01 | `materials/README.md:9-10` | 「認証情報を含む原本は確認して保存・変換版でマスク」と読め、AGENTS「秘密はどこにも書かない」と食い違う。秘密入り原本が git 管理の materials に残り得る | 秘密と第三者の個人情報の扱いを分け、秘密を含む原本は保存せず、秘密を除いた受領版のみ置くと明記。`templates/repo/docs/PROJECT.md:23`(値の入手先を人に示す行)は対象外 |
 | J-11 | P3 | A-05 | `.devcontainer/README.md:29-32` | bubblewrap が動かないとき「コンテナが隔離境界なので」`danger-full-access` を案内する。コンテナはワークスペース全体と認証情報(~/.claude・~/.codex)を含み、既定でネットワーク制限も無いので、起動障害の対処として AI が実行範囲を広げてよいと誤読され得る | 自動的な回避手順から外し、「共有ワークスペースへの書き込みと外部通信が無制限になり得ることを確認したうえで人が判断する(ファイアウォール節と併用)」の趣旨に書き換える |
-| J-12 | P3(任意) | F-06 | `templates/repo/AGENTS.md:22-24`、`.claude/settings.json:5` | 承認ゲート hooks は Write / Edit(と apply_patch)でしか発火せず、Bash の heredoc / sed で編集するハーネス設定では一度も動かない。AGENTS:62-65 と README:149 に「編集ツール経路のみ」は明記済みなので新規の安全欠陥とは数えない | 承認ゲートの段落(変更の進め方)に「hooks は編集ツール経路のみ。design / tasks をシェル経由で書かない」を再掲する文書改善。Bash のコマンド文字列を正規表現で見る hook は「曖昧なら通す」防壁になるため採用しない |
+| J-12 | P3(任意) | F-06 | `templates/repo/AGENTS.md:22-24`、`.claude/settings.json:5` | 承認ゲート hooks は Write / Edit(と apply_patch)でしか発火せず、Bash の heredoc / sed で編集するハーネス設定では一度も動かない。AGENTS:62-65 と README:149 に「編集ツール経路のみ」は明記済みなので新規の安全欠陥とは数えない | 承認ゲートの段落(変更の進め方)に「承認ゲート hooks の検査は編集ツール経路のみで、シェル経由の書き込みは対象外」と制限を再掲する文書改善(新しい禁止は足さない)。Bash のコマンド文字列を正規表現で見る hook は「曖昧なら通す」防壁になるため採用しない |
 
 ## 3. 意見が割れた点と収束のしかた
 
@@ -54,6 +54,7 @@ AGENTS「変更の進め方」「記録」「安全」と矛盾しない。置�
   承認・verified・不可逆操作の文言は両層で一致、hooks の設置説明と実体の一致、3 スクリプトと hooks 設定は両層で同一
 - 両層 AGENTS.md は 77 行 / 97 行(実質 98)で上限内。スキル本文を恒常層へ移す必要は無い
 - bash 3.2 の `set -u` と空配列(Delete のみのパッチ)は動作する(fable が直接確認)
+- J-03 / J-04 の追加入力(エスケープ入り JSON・同一パッチ内の承認解除)は未実行で、コードを追った静的判定。28 件の selftest の成功には含まれない
 - 未確認(ネットワーク取得禁止のため): 実 CLI での hook 配送、CLAUDE / AGENTS の発見条件、OKF 一次仕様との適合。合成テストの成功を実 CLI でのゲート有効性の証明とはしない
 
 ## 6. 提案する着手順(template-cc 向け)
