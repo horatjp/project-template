@@ -14,7 +14,8 @@
   - E 群(過剰指示・儀式の削減): E1〜E5 完了・Codex 承認・コミット済み(main)
   - F 群(不足の追加): F1・F4・F6 完了・Codex 承認・コミット済み(main)。F3 は見送り、F2・F5 は実案件で必要になったら
 - 2026-10-09 multi-agent モジュールを削除(main 34cd66d・b9e263e)。完了
-- 2026-10-30 契約による設計・副作用の分離をリポジトリ層の規範に追加(main 0f515ef)。別AIのレビューは未実施
+- 2026-10-30 契約による設計・副作用の分離をリポジトリ層の規範に追加(main 0f515ef)。Fable・Astra の全体レビューで妥当と確認し、
+  合意12件を修正(main 8a3cfa4・75b4960、Fable 再確認 P1=0 P2=0)。完了
 
 ## 宿題(open)
 
@@ -22,6 +23,7 @@
 
 - [ ] ~/projects/okayu など他プロジェクトの templates/ 複製の multi-agent 整理 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
 - [ ] dotfiles 側 CLAUDE.md の multi-agent 言及の修正 / ユーザー / 期限なし / 出所: journal/2026-10-09.md
+- [ ] R3-01: PATH 上の grep に実行権限が無いと check-credentials.sh が exit 0 で通る(P3。事前プローブ1行+selftest1件で直る)/ AI / 期限なし / 出所: journal/2026-10-30.md
 
 
 ## 次の一手

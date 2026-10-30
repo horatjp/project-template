@@ -1,0 +1,554 @@
+diff --git a/.devcontainer/README.md b/.devcontainer/README.md
+index 4d8fb5e..84af804 100644
+--- a/.devcontainer/README.md
++++ b/.devcontainer/README.md
+@@ -27,9 +27,10 @@ VS Code で「Reopen in Container」(または `devcontainer up`)で起動する
+   dotfiles でスキルを管理している場合、VS Code の設定
+   `"dotfiles.repository": "<user>/dotfiles"` を入れておくと全コンテナに自動適用される
+ - **Codex のサンドボックス**: コンテナ内では bubblewrap が user namespace を作れず
+-  起動しないことがある(ドライランで確認)。コンテナ自体が隔離境界なので、その場合は
+-  サンドボックス無しで実行する(`codex --sandbox danger-full-access`、または
+-  `~/.codex/config.toml` で設定)
++  起動しないことがある(ドライランで確認)。サンドボックス無しの実行
++  (`codex --sandbox danger-full-access` 等)へ自動的に切り替えない。コンテナにはワークスペース全体と
++  認証情報(`~/.claude`・`~/.codex`)があり、共有ワークスペースへの書き込みと外部通信が無制限になり得る。
++  下記ファイアウォール節も併せて確認したうえで、利用するかは人が判断する
+ 
+ ## スタックが決まったら
+ 
+diff --git a/AGENTS.md b/AGENTS.md
+index 465e996..0f28db7 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -14,7 +14,7 @@
+ | `materials/` | ファイル原本(受領・作成した資料。PDF・スライド等) |
+ | `repos/` | コードリポジトリ。各リポジトリは独立した git で、個別の `AGENTS.md` に従う |
+ | `.agents/skills/` | ワークスペース共有スキル(正典。`.claude/skills/` は Claude Code 用の symlink) |
+-| `templates/` | 新規リポジトリ用テンプレート(`repo/`)と追加モジュール(`modules/`)。運用中は触らない |
++| `templates/` | 新規リポジトリ用テンプレート(`repo/`)。運用中は触らない |
+ | `_archive/`・`_devlog/` | テンプレート保守者のローカル資料(git 管理外、clone には無い)。`_devlog/` はテンプレート自身の運営記録(`dev-log` ブランチの worktree)、`_archive/` は設計判断の原本などのローカル資料 |
+ 
+ ## 2. セッション開始手順
+@@ -58,7 +58,7 @@
+   扱うため private リポジトリで運用する(public にしない)
+ - 不可逆な操作(削除・復元不能な上書き・外部への送信・課金・公開)の前は必ず停止し、
+   ユーザーの確認を取る(STATUS.md・生きた文書の通常の上書き更新は該当しない)
+-- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)の変更は自己権限拡大にあたるため、ユーザーの承認なしに行わない
++- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)・hooks が参照するスクリプト(`scripts/check-proposal-approved.sh`・`scripts/check-credentials.sh`)の変更は自己権限拡大にあたるため、ユーザーの承認なしに行わない
+ - 同意ばかりしない。曖昧な点は勝手に埋めず質問する。誤りと思えば根拠を添えて反対する
+ 
+ ## 5. 保守
+diff --git a/README.md b/README.md
+index 9018fb4..8102c15 100644
+--- a/README.md
++++ b/README.md
+@@ -35,7 +35,7 @@ CLIコーディングAI全般に対応する。
+   変更スペック(`changes/`)+ 決定・学びの記録(`docs/`)
+ 
+ 変更管理は「変更を一級市民にする」方針で、スペック必須の変更(新機能 / 公開インターフェース
+-の変更 / 既存の決定を覆す変更)だけ `changes/` でスペック駆動にする
++の変更 / `stable` な決定記録を覆す変更)だけ `changes/` でスペック駆動にする
+ (proposal → 承認 → design → tasks → 実装)。タスク数件で収まる可逆な小機能は、proposal 1文書で
+ 進める軽量モードにできる(承認は同じく必須)。バグ修正・微修正には強制しない。
+ 承認前に design・tasks を書かせないゲートは、指示ではなく hooks で機械的に強制する
+@@ -142,6 +142,8 @@ ln -s ../../.agents/skills/<skill-name>       repos/<repo>/.claude/skills/<skill
+ dangling になるため、リポジトリ側 `.gitignore` で除外するか(setup-repo スキルは除外する)、
+ 単体配布時はコピーに置き換える。除外した symlink は `git worktree` で作った作業先にも
+ 引き継がれないので、必要ならワークスペース側の `SKILL.md` を直接読ませる。
++ワークスペース配下のリポジトリの worktree は、そのワークスペースの `repos/` 直下
++(例: `repos/<name>-<task>`)に作り、`../../AGENTS.md` でワークスペースの規範を読めるようにする。
+ 
+ ## hooks — 承認ゲートと認証情報検出(同梱済み・既定で有効)
+ 
+@@ -170,7 +172,7 @@ Google / Stripe トークン・`sk-` 系APIキー・秘密鍵ブロック)を、
+ どちらのスクリプトも Claude Code(Write / Edit)と Codex CLI(`apply_patch`)の両方の入力形式を
+ 扱う。Codex では `apply_patch` のパッチ本文からヘッダー行のパスを抽出して承認ゲートを判定し、
+ 認証情報は追加行だけを検査する(漏えい済みの値を削除する編集は止めない)。JSON の解析に jq か
+-python3 が必要で、どちらも無ければ検査不能として理由を表示しブロックする。
++python3 が必要(開発環境にどちらか一方を導入する)。両形式とも、どちらも無ければ検査不能として理由を表示しブロックする。
+ `scripts/hooks-selftest.sh` が両形式の合成入力で挙動を検証する(実 CLI は不要)。
+ 
+ スタックが決まったら、フォーマット・lint・テストゲートも同様に
+@@ -213,7 +215,8 @@ Claude Code の機構で Codex は読まないため、守らせたい規約は
+ - 月1回程度「棚卸しして」と一声かける(`tanaoroshi` スキルが deprecated の整理・
+   stale_after の見直し・learnings の昇格候補・100行上限の点検を提案としてまとめる)
+ - 複数エージェントを並列で走らせるときは git worktree でタスクごとに隔離する
+-  (同一ワーキングディレクトリの同時編集は破綻する)
++  (同一ワーキングディレクトリの同時編集は破綻する)。ワークスペース配下のリポジトリの
++  worktree は、そのワークスペースの `repos/` 直下(例: `repos/<name>-<task>`)に作る
+ 
+ ## テンプレートの保守
+ 
+diff --git a/materials/README.md b/materials/README.md
+index 1169a57..3cda67d 100644
+--- a/materials/README.md
++++ b/materials/README.md
+@@ -6,8 +6,8 @@
+ 
+ - 命名は `YYYY-MM-DD-<topic>.<ext>`(受領日・作成日)
+ - 保存したら journal の当日エントリからリンクし、出所(誰から・どこから)を1行残す
+-- 原本に認証情報・第三者の個人情報が含まれる場合は、保存・変換の前にユーザーへ確認する
+-  (変換版では該当部分をマスクする)
++- 認証情報・シークレットを含む原本は保存しない。秘密を除いた受領版のみ置き、その版を変換する
++- 第三者の個人情報を含む場合は、保存・変換の前にユーザーへ確認し、変換版では該当部分をマスクする
+ - 1画面で見渡せなくなったら年別サブフォルダ化(AIが提案する)
+ 
+ ## AI可読化: 同名 `.md` の併置
+diff --git a/scripts/check-credentials.sh b/scripts/check-credentials.sh
+index 2abcd68..236526b 100755
+--- a/scripts/check-credentials.sh
++++ b/scripts/check-credentials.sh
+@@ -17,12 +17,17 @@
+ #       シェル等の別経路(echo > file 等)は対象外 — 完全な防壁ではなく編集ツール経路の補助。
+ #
+ # 互換性: macOS(BSD)/ Linux(GNU)両対応。JSON の解析は jq → python3 の順で使う。
+-#       どちらも無い場合: Claude 形式は入力全体を走査(安全側。旧値の置換編集までブロックし得る)、
+-#       apply_patch 形式は追加行だけを取り出せないため、理由を表示してブロックする(検査不能≠対象外)。
++#       どちらも無い場合は両形式とも理由を表示して exit 2 でブロックする(検査不能≠対象外)。
+ 
+ set -euo pipefail
++# 想定外の終了も hook の非ブロックエラーにせず、検査不能として理由付きで拒否する。
++trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then echo "シークレット検出: 内部エラー(exit $rc)で検査できないため書き込みをブロックします。" >&2; exit 2; fi' EXIT
+ 
+ input=$(cat)
++[ -n "$input" ] || {
++  echo "シークレット検出: フック入力が空です。検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ 
+ # --- JSON から必要なフィールドを取り出す(jq → python3) --------------------------------
+ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)。取り出せなければ非ゼロ
+@@ -35,9 +40,12 @@ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)
+   fi
+ }
+ 
+-# パーサが無くても tool_name だけは生の JSON から拾う(apply_patch を Claude 形式と誤認しないため)
+-tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')") \
+-  || tool_name=$(printf '%s' "$input" | sed -nE 's/.*"tool_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++# 復号できない入力は検査済みと扱わない。入力形式を問わず同じ依存を要求する。
++if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
++  echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
++  exit 2
++fi
++tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ if [ "$tool_name" = "apply_patch" ]; then
+   patch=$(json_get '.tool_input.command // empty' "d.get('tool_input',{}).get('command','')") || {
+@@ -58,8 +66,6 @@ import json,sys
+ d=json.load(sys.stdin); t=d.get("tool_input",{}) or {}
+ parts=[t.get("content"), t.get("new_string")] + [e.get("new_string") for e in (t.get("edits") or [])]
+ print("\n".join(p for p in parts if isinstance(p,str)))' 2>/dev/null) || scan=$input
+-  else
+-    scan=$input
+   fi
+ fi
+ 
+diff --git a/scripts/check-proposal-approved.sh b/scripts/check-proposal-approved.sh
+index ca9cee5..d7132bc 100755
+--- a/scripts/check-proposal-approved.sh
++++ b/scripts/check-proposal-approved.sh
+@@ -13,16 +13,24 @@
+ #       Codex:       tool_name "apply_patch" の tool_input.command(パッチ本文)から、生の行頭
+ #                    "*** Add File: " / "*** Update File: " / "*** Move to: " のパスを全て抽出し、
+ #                    hook 入力の cwd を基準に正規化して判定(複数ファイルは全件検査)。
+-#                    "*** Delete File:" はゲート対象外(書き込み防止の範囲を無断で広げない)
++#                    "*** Delete File:" は design/tasks のゲート対象外。
++#                    ただし同じ change の proposal.md を Add / Update / Move / Delete するパッチでは、
++#                    その change の design/tasks の変更をブロックする(旧承認を根拠にしない)。
+ #       対象外パスは exit 0(通す)、承認未記入は exit 2(ブロック。stderr がAIに渡る)。
+ #       承認の根拠は実行前にディスク上にある proposal.md だけ — 同じ編集で承認欄を書くことは根拠にしない。
+ #
+ # 互換性: macOS(BSD)/ Linux(GNU)両対応。JSON の解析は jq → python3 の順。どちらも無い場合、
+-#       Claude 形式は sed で file_path を取り出し、apply_patch 形式は解析できないため理由を表示してブロックする。
++#       両形式とも検査できない理由を表示して exit 2 でブロックする。
+ 
+ set -euo pipefail
++# 想定外の終了も hook の非ブロックエラーにせず、検査不能として理由付きで拒否する。
++trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then echo "承認ゲート: 内部エラー(exit $rc)で検査できないため書き込みをブロックします。" >&2; exit 2; fi' EXIT
+ 
+ input=$(cat)
++[ -n "$input" ] || {
++  echo "承認ゲート: フック入力が空です。検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ 
+ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)
+   if command -v jq >/dev/null 2>&1; then
+@@ -50,11 +58,15 @@ normalize_path() { # $1: path, $2: base dir
+   echo
+ }
+ 
+-# パーサが無くても tool_name だけは生の JSON から拾う(apply_patch を Claude 形式と誤認しないため)
+-tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')") \
+-  || tool_name=$(printf '%s' "$input" | sed -nE 's/.*"tool_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++# 復号できない入力は検査済みと扱わない。入力形式を問わず同じ依存を要求する。
++if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
++  echo "承認ゲート: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
++  exit 2
++fi
++tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ paths=()
++proposal_paths=()
+ if [ "$tool_name" = "apply_patch" ]; then
+   patch=$(json_get '.tool_input.command // empty' "d.get('tool_input',{}).get('command','')") || {
+     echo "承認ゲート: apply_patch の内容を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。jq を導入してください。" >&2
+@@ -70,13 +82,15 @@ if [ "$tool_name" = "apply_patch" ]; then
+       "*** Add File: "*)    paths+=("$(normalize_path "${line#\*\*\* Add File: }" "$cwd")") ;;
+       "*** Update File: "*) paths+=("$(normalize_path "${line#\*\*\* Update File: }" "$cwd")") ;;
+       "*** Move to: "*)     paths+=("$(normalize_path "${line#\*\*\* Move to: }" "$cwd")") ;;
++      "*** Delete File: "*) proposal_paths+=("$(normalize_path "${line#\*\*\* Delete File: }" "$cwd")") ;;
+     esac
+   done <<< "$patch"
+   # 末尾スラッシュは落とす(dir/ 形式で渡されても design.md には一致しないが、比較を素直にする)
+   paths=("${paths[@]%/}")
++  # 削除は design/tasks のゲート対象にはしないが、proposal の失効判定には含める。
++  proposal_paths=("${proposal_paths[@]-}" "${paths[@]-}")
+ else
+-  fp=$(json_get '.tool_input.file_path // empty' "d.get('tool_input',{}).get('file_path','')") \
+-    || fp=$(printf '%s' "$input" | sed -nE 's/.*"file_path"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++  fp=$(json_get '.tool_input.file_path // empty' "d.get('tool_input',{}).get('file_path','')")
+   [ -n "$fp" ] && paths+=("$fp")
+ fi
+ 
+@@ -92,6 +106,14 @@ for file_path in "${paths[@]}"; do
+ 
+   proposal="$(dirname "$file_path")/proposal.md"
+ 
++  # 旧承認を根拠にしない: 同一操作で proposal を触るなら、先に変更と再承認を確定させる。
++  for changed_path in "${proposal_paths[@]-}"; do
++    if [ "$changed_path" = "$proposal" ]; then
++      echo "承認ゲート: $proposal と同じ change の design / tasks は同一パッチで変更できません。proposal の変更と再承認を先に確定させてください。" >&2
++      exit 2
++    fi
++  done
++
+   if [ ! -f "$proposal" ]; then
+     echo "承認ゲート: $proposal がありません。先に proposal を書き、ユーザーの承認を得てください。" >&2
+     exit 2
+diff --git a/scripts/hooks-selftest.sh b/scripts/hooks-selftest.sh
+index 6d530a8..d2cb3b6 100755
+--- a/scripts/hooks-selftest.sh
++++ b/scripts/hooks-selftest.sh
+@@ -9,6 +9,11 @@ patch_json() { python3 -c 'import json,sys; print(json.dumps({"tool_name":"apply
+ run() { # run <label> <want_exit> <script> <json> [env...]
+   local label="$1" want="$2" script="$3" json="$4"; shift 4
+   local out got; out=$(printf '%s' "$json" | env "$@" bash "$SCRIPTS/$script" 2>&1); got=$?
++  # 理由表示ケースは終了値だけでなく、依存と拒否理由も検証する。
++  case "$label" in
++    *パーサ無し*) if ! [[ "$out" == *'jq または python3'* && "$out" == *'検査できないため'* ]]; then got="${got}(理由なし)"; fi ;;
++    *理由表示*) if ! [[ "$out" == *'検査できないため'* && "$out" == *'ブロック'* ]]; then got="${got}(理由なし)"; fi ;;
++  esac
+   if [ "$got" = "$want" ]; then PASS=$((PASS+1)); echo "  ok   $label"; else FAIL=$((FAIL+1)); echo "  FAIL $label (exit $got, want $want)"; printf '%s\n' "$out" | sed 's/^/       | /'; fi
+ }
+ A=check-proposal-approved.sh; C=check-credentials.sh; NOPARSER="PATH=/usr/bin:/bin"  # jq/python3 が無い環境の模擬(下で確認)
+@@ -22,6 +27,13 @@ run "Delete は対象外 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n**
+ run "複数ファイル(1件未承認)→ block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/design.md\n@@\n+a\n*** Update File: changes/foo/design.md\n@@\n+b\n*** End Patch')"
+ run "_template は対象外 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/_template/design.md\n@@\n+a\n*** End Patch')"
+ run "同一パッチ内の承認は根拠にしない → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Add File: changes/foo/proposal.md\n+- [x] ユーザー承認\n*** Update File: changes/foo/design.md\n@@\n+b\n*** End Patch')"
++# J-04: ディスク上が承認済みでも、同じパッチ内の proposal 更新とは併用できない
++run "同一パッチ内で承認解除 + design 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/proposal.md\n@@\n-- [x] ユーザー承認(2026-09-23)\n+- [ ] ユーザー承認\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++run "同一パッチ内で tasks 更新 + proposal 削除 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/tasks.md\n@@\n+b\n*** Delete File: changes/ok/proposal.md\n*** End Patch')"
++run "別 change の proposal 更新 + 承認済み design 更新 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/foo/proposal.md\n@@\n+x\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++# R-06: proposal の Move 元と、CRLF の Delete も旧承認の根拠にできない。
++run "proposal を Move で退避 + design 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/proposal.md\n*** Move to: changes/ok/old-proposal.md\n@@\n+x\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++run "CRLF: proposal 削除 + tasks 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\r\n*** Delete File: changes/ok/proposal.md\r\n*** Update File: changes/ok/tasks.md\r\n@@\r\n+b\r\n*** End Patch\r\n')"
+ run "Claude Write(未承認)→ block" 2 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/foo/design.md\",\"content\":\"x\"}}"
+ run "Claude Write(承認済み)→ pass" 0 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/ok/design.md\",\"content\":\"x\"}}"
+ run "Claude Bash(file_path 無し)→ pass" 0 $A '{"tool_name":"Bash","tool_input":{"command":"ls"}}'
+@@ -42,6 +54,26 @@ run "Claude Write 既知ダミー(EXAMPLE)→ pass" 0 $C '{"tool_name":"Write","
+ NP="$T/nopath"; mkdir -p "$NP"; for b in bash grep sed cat dirname head printf env; do p=$(command -v $b) && ln -s "$p" "$NP/$b"; done
+ run "パーサ無し + apply_patch(承認ゲート)→ block(理由表示)" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: x.md\n@@\n+a\n*** End Patch')" PATH="$NP"
+ run "パーサ無し + apply_patch(認証情報)→ block(理由表示)" 2 $C "$(patch_json "$T" $'*** Begin Patch\n*** Update File: x.md\n@@\n+a\n*** End Patch')" PATH="$NP"
+-run "パーサ無し + Claude Write 対象外パス → pass(sed 代替)" 0 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/notes.md\",\"content\":\"x\"}}" PATH="$NP"
+-run "パーサ無し + Claude Edit(old にトークン)→ 全体走査で block(安全側)" 2 $C '{"tool_name":"Edit","tool_input":{"file_path":"a.md","old_string":"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123","new_string":"env"}}' PATH="$NP"
++run "パーサ無し + Claude Write 対象外パス → block(理由表示)" 2 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/notes.md\",\"content\":\"x\"}}" PATH="$NP"
++run "パーサ無し + Claude Edit(old にトークン)→ block(理由表示)" 2 $C '{"tool_name":"Edit","tool_input":{"file_path":"a.md","old_string":"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123","new_string":"env"}}' PATH="$NP"
++# Unicode エスケープは JSON の復号後に判定する必要がある(合成入力)。
++ESC_PATH="{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/foo/\\u0064esign.md\",\"content\":\"x\"}}"
++ESC_TOKEN='{"tool_name":"Write","tool_input":{"file_path":"a.md","content":"\u0067hp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123"}}'
++run "Unicode パス + パーサあり → block" 2 $A "$ESC_PATH"
++run "Unicode トークン + パーサあり → block" 2 $C "$ESC_TOKEN"
++run "Unicode パス + パーサ無し → block(理由表示)" 2 $A "$ESC_PATH" PATH="$NP"
++run "Unicode トークン + パーサ無し → block(理由表示)" 2 $C "$ESC_TOKEN" PATH="$NP"
++run "パーサ無し + Claude Write 無害な内容 → block(理由表示)" 2 $C '{"tool_name":"Write","tool_input":{"file_path":"a.md","content":"harmless"}}' PATH="$NP"
++# R-01: jq / python3 各経路の復号失敗と、空入力を両ゲートで検証する。
++JQ_ONLY="$T/jq-only"; PY_ONLY="$T/python-only"; mkdir -p "$JQ_ONLY" "$PY_ONLY"
++for b in bash grep sed cat dirname head printf env; do
++  p=$(command -v "$b") && ln -s "$p" "$JQ_ONLY/$b" && ln -s "$p" "$PY_ONLY/$b"
++done
++ln -s "$(command -v jq)" "$JQ_ONLY/jq"
++ln -s "$(command -v python3)" "$PY_ONLY/python3"
++for gate in "$A" "$C"; do
++  run "$gate: 不正 JSON(jq のみ) → block(理由表示)" 2 "$gate" '{invalid' PATH="$JQ_ONLY"
++  run "$gate: 不正 JSON(python3 のみ) → block(理由表示)" 2 "$gate" '{invalid' PATH="$PY_ONLY"
++  run "$gate: 空入力 → block(理由表示)" 2 "$gate" ''
++done
+ echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]
+diff --git a/templates/repo/.agents/skills/lens-review/SKILL.md b/templates/repo/.agents/skills/lens-review/SKILL.md
+index e0604d5..445cb74 100644
+--- a/templates/repo/.agents/skills/lens-review/SKILL.md
++++ b/templates/repo/.agents/skills/lens-review/SKILL.md
+@@ -23,7 +23,7 @@ description: 変更やドキュメントを特定の観点(レンズ)でレビ
+ 
+ ### correctness(正しさ)
+ 仕様(changes/ のスペック)との一致・エッジケース・エラー処理・テストの妥当性。
+-契約(事前・事後・不変条件)がテストで押さえられているか、名前やシグネチャに表れない副作用がないか。
++業務ルール・計算を担うコードでは、契約(事前・事後・不変条件)がテストで押さえられているか、名前やシグネチャに表れない副作用がないか。
+ 
+ ### design(概念・モデル)
+ モデルが現実を無理なく表しているか。概念テスト(新機能を既存概念で自然に言い直せるか)・
+diff --git a/templates/repo/AGENTS.md b/templates/repo/AGENTS.md
+index e801a5d..ad2698d 100644
+--- a/templates/repo/AGENTS.md
++++ b/templates/repo/AGENTS.md
+@@ -20,7 +20,7 @@
+ - 要件が曖昧なまま proposal を書かない。先にユーザーへ聞き切る
+   (ワークスペースの hearing スキルがあれば、その方法論に従う)
+ - **スペック必須の変更**(新機能 / 公開インターフェース(API・DB スキーマ・CLI・画面構成)の変更 /
+-  active な決定記録を覆す変更)は `changes/<change-name>/` で進める。どの区分でも proposal を書き、
++  `stable` な決定記録を覆す変更)は `changes/<change-name>/` で進める。どの区分でも proposal を書き、
+   **ユーザーの明示的な承認を得てから**実装する。区分は proposal に理由付きで書き、承認で確定する:
+   - **軽量** — 公開インターフェース・スキーマ・決定・セキュリティ・課金に触れない、タスク数件で収まる可逆な小機能。
+     proposal だけで進め、実装メモ(方針・タスクと検証)と完了報告も proposal に書く。本人以外のAIの観点レビューは推奨。
+@@ -31,13 +31,15 @@
+   - スコープ・影響範囲が proposal から変わったら、実装を止めて proposal を直し、再承認を得る。
+     実装詳細レベルの乖離なら design(軽量は実装メモ)を直して現在形に保つ(完了報告の「判断した点」に記す)
+ - 上記に該当しない変更(バグ修正・微修正・内部リファクタリング)はスペック不要。直接実装してよい
++- 承認ゲート hooks の検査は編集ツール経路のみで、シェル経由の書き込みは対象外
+ - 完了した change は、恒久的に効く判断が design・完了報告(軽量は proposal)にあれば
+   `docs/decisions/` へ抽出してから `changes/archive/YYYY-MM-DD-<change-name>/`(完了日)へ移動する
+ 
+ ## コードの設計
+ 
+ - 業務ルール・計算を担う関数・クラスは、実装の前に事前条件・事後条件・不変条件を書き出し、
+-  それに基づくテスト(境界値を含む)を先に書いてから実装する。条件に反する値は入口(引数検査・コンストラクタ)で弾く
++  それに基づくテスト(境界値を含む)を先に書いてから実装する。条件に反する値は入口(引数検査・コンストラクタ)で弾く。
++  書き先は design の契約節。軽量は proposal の実装メモ、スペック不要の変更はテスト名・docstring
+ - 副作用(引数・外部状態の書き換え、I/O)は名前とシグネチャに表れる場所へ分離し、それ以外は戻り値だけで結果を
+   返す純粋関数・不変オブジェクトにする。名前に表れない処理を混ぜない
+ - テストが保証するのは書いた条件だけ。条件が要件から読み取れないときは推測せずユーザーに確認する
+@@ -77,9 +79,10 @@
+   確認を取る(STATUS.md・生きた文書の通常の上書き更新は該当しない)
+ - 曖昧な点は勝手に埋めず質問する。誤りと思えば根拠を添えて反対する
+ - テストが通らない状態で「完了」と報告しない。検証をスキップしたときはその旨を明記する
+-- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)の変更は
++- `AGENTS.md`・`.agents/skills/`・`.claude/`・`.codex/`(hooks・rules・スキル入口)・hooks が参照するスクリプト(`scripts/check-proposal-approved.sh`・`scripts/check-credentials.sh`)の変更は
+   自己権限拡大にあたるため、ユーザーの承認なしに行わない
+-- 複数エージェントで並列作業するときは git worktree でタスクごとに隔離する
++- 複数エージェントで並列作業するときは git worktree でタスクごとに隔離する。ワークスペース配下のリポジトリの
++  worktree は、そのワークスペースの `repos/` 直下(例: `repos/<name>-<task>`)に作る
+ 
+ ## ワークスペース配下の場合
+ 
+@@ -92,6 +95,4 @@
+ 更新し(作業の詳細はこのリポジトリの `docs/STATUS.md` が正)、
+ 節目(実装完了・レビュー完了など)はワークスペースの `journal/` にも1行残す。
+ 
+-## このファイルの保守
+-
+-- 100行以下を保つ。各行を「これを消したらAIがミスするか?」で検証し、Noなら削除する- 手順・チェックリストは `.agents/skills/` へ、パス限定の規約は `docs/rules/` へ逃がす
++- このファイルは100行以下を保つ。「消したらAIがミスするか?」で No の行は削除し、手順は `.agents/skills/`、パス限定の規約は `docs/rules/` へ逃がす
+diff --git a/templates/repo/docs/PROJECT.md b/templates/repo/docs/PROJECT.md
+index 9a0b158..55ec9fc 100644
+--- a/templates/repo/docs/PROJECT.md
++++ b/templates/repo/docs/PROJECT.md
+@@ -20,6 +20,7 @@ docs/requirements.md(生きた文書=実装済み要件の正典。承認済み
+ (初回セットアップ・テスト実行・ローカル起動の各1コマンド。長い手順は README 等へのリンクにして
+ ここには入口だけを置く。新しいセッションが最初に実行できる状態を保つ)
+ 
++- hooks の依存: `jq` または `python3`(どちらも無いと、編集ツール経由の書き込みがすべてブロックされる)
+ - 秘密情報の入手先: (値ではなく場所だけ。例: `.env.example` をコピーし、値はチームのパスワードマネージャーの「<項目名>」から)
+ 
+ ## 制約(変わらないもの)
+diff --git a/templates/repo/scripts/check-credentials.sh b/templates/repo/scripts/check-credentials.sh
+index 2abcd68..236526b 100755
+--- a/templates/repo/scripts/check-credentials.sh
++++ b/templates/repo/scripts/check-credentials.sh
+@@ -17,12 +17,17 @@
+ #       シェル等の別経路(echo > file 等)は対象外 — 完全な防壁ではなく編集ツール経路の補助。
+ #
+ # 互換性: macOS(BSD)/ Linux(GNU)両対応。JSON の解析は jq → python3 の順で使う。
+-#       どちらも無い場合: Claude 形式は入力全体を走査(安全側。旧値の置換編集までブロックし得る)、
+-#       apply_patch 形式は追加行だけを取り出せないため、理由を表示してブロックする(検査不能≠対象外)。
++#       どちらも無い場合は両形式とも理由を表示して exit 2 でブロックする(検査不能≠対象外)。
+ 
+ set -euo pipefail
++# 想定外の終了も hook の非ブロックエラーにせず、検査不能として理由付きで拒否する。
++trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then echo "シークレット検出: 内部エラー(exit $rc)で検査できないため書き込みをブロックします。" >&2; exit 2; fi' EXIT
+ 
+ input=$(cat)
++[ -n "$input" ] || {
++  echo "シークレット検出: フック入力が空です。検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ 
+ # --- JSON から必要なフィールドを取り出す(jq → python3) --------------------------------
+ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)。取り出せなければ非ゼロ
+@@ -35,9 +40,12 @@ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)
+   fi
+ }
+ 
+-# パーサが無くても tool_name だけは生の JSON から拾う(apply_patch を Claude 形式と誤認しないため)
+-tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')") \
+-  || tool_name=$(printf '%s' "$input" | sed -nE 's/.*"tool_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++# 復号できない入力は検査済みと扱わない。入力形式を問わず同じ依存を要求する。
++if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
++  echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
++  exit 2
++fi
++tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ if [ "$tool_name" = "apply_patch" ]; then
+   patch=$(json_get '.tool_input.command // empty' "d.get('tool_input',{}).get('command','')") || {
+@@ -58,8 +66,6 @@ import json,sys
+ d=json.load(sys.stdin); t=d.get("tool_input",{}) or {}
+ parts=[t.get("content"), t.get("new_string")] + [e.get("new_string") for e in (t.get("edits") or [])]
+ print("\n".join(p for p in parts if isinstance(p,str)))' 2>/dev/null) || scan=$input
+-  else
+-    scan=$input
+   fi
+ fi
+ 
+diff --git a/templates/repo/scripts/check-proposal-approved.sh b/templates/repo/scripts/check-proposal-approved.sh
+index ca9cee5..d7132bc 100755
+--- a/templates/repo/scripts/check-proposal-approved.sh
++++ b/templates/repo/scripts/check-proposal-approved.sh
+@@ -13,16 +13,24 @@
+ #       Codex:       tool_name "apply_patch" の tool_input.command(パッチ本文)から、生の行頭
+ #                    "*** Add File: " / "*** Update File: " / "*** Move to: " のパスを全て抽出し、
+ #                    hook 入力の cwd を基準に正規化して判定(複数ファイルは全件検査)。
+-#                    "*** Delete File:" はゲート対象外(書き込み防止の範囲を無断で広げない)
++#                    "*** Delete File:" は design/tasks のゲート対象外。
++#                    ただし同じ change の proposal.md を Add / Update / Move / Delete するパッチでは、
++#                    その change の design/tasks の変更をブロックする(旧承認を根拠にしない)。
+ #       対象外パスは exit 0(通す)、承認未記入は exit 2(ブロック。stderr がAIに渡る)。
+ #       承認の根拠は実行前にディスク上にある proposal.md だけ — 同じ編集で承認欄を書くことは根拠にしない。
+ #
+ # 互換性: macOS(BSD)/ Linux(GNU)両対応。JSON の解析は jq → python3 の順。どちらも無い場合、
+-#       Claude 形式は sed で file_path を取り出し、apply_patch 形式は解析できないため理由を表示してブロックする。
++#       両形式とも検査できない理由を表示して exit 2 でブロックする。
+ 
+ set -euo pipefail
++# 想定外の終了も hook の非ブロックエラーにせず、検査不能として理由付きで拒否する。
++trap 'rc=$?; if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then echo "承認ゲート: 内部エラー(exit $rc)で検査できないため書き込みをブロックします。" >&2; exit 2; fi' EXIT
+ 
+ input=$(cat)
++[ -n "$input" ] || {
++  echo "承認ゲート: フック入力が空です。検査できないため書き込みをブロックします。" >&2
++  exit 2
++}
+ 
+ json_get() { # $1: jq フィルタ, $2: 同等の python 式(変数 d が JSON)
+   if command -v jq >/dev/null 2>&1; then
+@@ -50,11 +58,15 @@ normalize_path() { # $1: path, $2: base dir
+   echo
+ }
+ 
+-# パーサが無くても tool_name だけは生の JSON から拾う(apply_patch を Claude 形式と誤認しないため)
+-tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')") \
+-  || tool_name=$(printf '%s' "$input" | sed -nE 's/.*"tool_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++# 復号できない入力は検査済みと扱わない。入力形式を問わず同じ依存を要求する。
++if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
++  echo "承認ゲート: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
++  exit 2
++fi
++tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
+ 
+ paths=()
++proposal_paths=()
+ if [ "$tool_name" = "apply_patch" ]; then
+   patch=$(json_get '.tool_input.command // empty' "d.get('tool_input',{}).get('command','')") || {
+     echo "承認ゲート: apply_patch の内容を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。jq を導入してください。" >&2
+@@ -70,13 +82,15 @@ if [ "$tool_name" = "apply_patch" ]; then
+       "*** Add File: "*)    paths+=("$(normalize_path "${line#\*\*\* Add File: }" "$cwd")") ;;
+       "*** Update File: "*) paths+=("$(normalize_path "${line#\*\*\* Update File: }" "$cwd")") ;;
+       "*** Move to: "*)     paths+=("$(normalize_path "${line#\*\*\* Move to: }" "$cwd")") ;;
++      "*** Delete File: "*) proposal_paths+=("$(normalize_path "${line#\*\*\* Delete File: }" "$cwd")") ;;
+     esac
+   done <<< "$patch"
+   # 末尾スラッシュは落とす(dir/ 形式で渡されても design.md には一致しないが、比較を素直にする)
+   paths=("${paths[@]%/}")
++  # 削除は design/tasks のゲート対象にはしないが、proposal の失効判定には含める。
++  proposal_paths=("${proposal_paths[@]-}" "${paths[@]-}")
+ else
+-  fp=$(json_get '.tool_input.file_path // empty' "d.get('tool_input',{}).get('file_path','')") \
+-    || fp=$(printf '%s' "$input" | sed -nE 's/.*"file_path"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
++  fp=$(json_get '.tool_input.file_path // empty' "d.get('tool_input',{}).get('file_path','')")
+   [ -n "$fp" ] && paths+=("$fp")
+ fi
+ 
+@@ -92,6 +106,14 @@ for file_path in "${paths[@]}"; do
+ 
+   proposal="$(dirname "$file_path")/proposal.md"
+ 
++  # 旧承認を根拠にしない: 同一操作で proposal を触るなら、先に変更と再承認を確定させる。
++  for changed_path in "${proposal_paths[@]-}"; do
++    if [ "$changed_path" = "$proposal" ]; then
++      echo "承認ゲート: $proposal と同じ change の design / tasks は同一パッチで変更できません。proposal の変更と再承認を先に確定させてください。" >&2
++      exit 2
++    fi
++  done
++
+   if [ ! -f "$proposal" ]; then
+     echo "承認ゲート: $proposal がありません。先に proposal を書き、ユーザーの承認を得てください。" >&2
+     exit 2
+diff --git a/templates/repo/scripts/hooks-selftest.sh b/templates/repo/scripts/hooks-selftest.sh
+index 6d530a8..d2cb3b6 100755
+--- a/templates/repo/scripts/hooks-selftest.sh
++++ b/templates/repo/scripts/hooks-selftest.sh
+@@ -9,6 +9,11 @@ patch_json() { python3 -c 'import json,sys; print(json.dumps({"tool_name":"apply
+ run() { # run <label> <want_exit> <script> <json> [env...]
+   local label="$1" want="$2" script="$3" json="$4"; shift 4
+   local out got; out=$(printf '%s' "$json" | env "$@" bash "$SCRIPTS/$script" 2>&1); got=$?
++  # 理由表示ケースは終了値だけでなく、依存と拒否理由も検証する。
++  case "$label" in
++    *パーサ無し*) if ! [[ "$out" == *'jq または python3'* && "$out" == *'検査できないため'* ]]; then got="${got}(理由なし)"; fi ;;
++    *理由表示*) if ! [[ "$out" == *'検査できないため'* && "$out" == *'ブロック'* ]]; then got="${got}(理由なし)"; fi ;;
++  esac
+   if [ "$got" = "$want" ]; then PASS=$((PASS+1)); echo "  ok   $label"; else FAIL=$((FAIL+1)); echo "  FAIL $label (exit $got, want $want)"; printf '%s\n' "$out" | sed 's/^/       | /'; fi
+ }
+ A=check-proposal-approved.sh; C=check-credentials.sh; NOPARSER="PATH=/usr/bin:/bin"  # jq/python3 が無い環境の模擬(下で確認)
+@@ -22,6 +27,13 @@ run "Delete は対象外 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n**
+ run "複数ファイル(1件未承認)→ block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/design.md\n@@\n+a\n*** Update File: changes/foo/design.md\n@@\n+b\n*** End Patch')"
+ run "_template は対象外 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/_template/design.md\n@@\n+a\n*** End Patch')"
+ run "同一パッチ内の承認は根拠にしない → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Add File: changes/foo/proposal.md\n+- [x] ユーザー承認\n*** Update File: changes/foo/design.md\n@@\n+b\n*** End Patch')"
++# J-04: ディスク上が承認済みでも、同じパッチ内の proposal 更新とは併用できない
++run "同一パッチ内で承認解除 + design 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/proposal.md\n@@\n-- [x] ユーザー承認(2026-09-23)\n+- [ ] ユーザー承認\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++run "同一パッチ内で tasks 更新 + proposal 削除 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/tasks.md\n@@\n+b\n*** Delete File: changes/ok/proposal.md\n*** End Patch')"
++run "別 change の proposal 更新 + 承認済み design 更新 → pass" 0 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/foo/proposal.md\n@@\n+x\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++# R-06: proposal の Move 元と、CRLF の Delete も旧承認の根拠にできない。
++run "proposal を Move で退避 + design 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: changes/ok/proposal.md\n*** Move to: changes/ok/old-proposal.md\n@@\n+x\n*** Update File: changes/ok/design.md\n@@\n+b\n*** End Patch')"
++run "CRLF: proposal 削除 + tasks 更新 → block" 2 $A "$(patch_json "$T" $'*** Begin Patch\r\n*** Delete File: changes/ok/proposal.md\r\n*** Update File: changes/ok/tasks.md\r\n@@\r\n+b\r\n*** End Patch\r\n')"
+ run "Claude Write(未承認)→ block" 2 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/foo/design.md\",\"content\":\"x\"}}"
+ run "Claude Write(承認済み)→ pass" 0 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/ok/design.md\",\"content\":\"x\"}}"
+ run "Claude Bash(file_path 無し)→ pass" 0 $A '{"tool_name":"Bash","tool_input":{"command":"ls"}}'
+@@ -42,6 +54,26 @@ run "Claude Write 既知ダミー(EXAMPLE)→ pass" 0 $C '{"tool_name":"Write","
+ NP="$T/nopath"; mkdir -p "$NP"; for b in bash grep sed cat dirname head printf env; do p=$(command -v $b) && ln -s "$p" "$NP/$b"; done
+ run "パーサ無し + apply_patch(承認ゲート)→ block(理由表示)" 2 $A "$(patch_json "$T" $'*** Begin Patch\n*** Update File: x.md\n@@\n+a\n*** End Patch')" PATH="$NP"
+ run "パーサ無し + apply_patch(認証情報)→ block(理由表示)" 2 $C "$(patch_json "$T" $'*** Begin Patch\n*** Update File: x.md\n@@\n+a\n*** End Patch')" PATH="$NP"
+-run "パーサ無し + Claude Write 対象外パス → pass(sed 代替)" 0 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/notes.md\",\"content\":\"x\"}}" PATH="$NP"
+-run "パーサ無し + Claude Edit(old にトークン)→ 全体走査で block(安全側)" 2 $C '{"tool_name":"Edit","tool_input":{"file_path":"a.md","old_string":"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123","new_string":"env"}}' PATH="$NP"
++run "パーサ無し + Claude Write 対象外パス → block(理由表示)" 2 $A "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/notes.md\",\"content\":\"x\"}}" PATH="$NP"
++run "パーサ無し + Claude Edit(old にトークン)→ block(理由表示)" 2 $C '{"tool_name":"Edit","tool_input":{"file_path":"a.md","old_string":"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123","new_string":"env"}}' PATH="$NP"
++# Unicode エスケープは JSON の復号後に判定する必要がある(合成入力)。
++ESC_PATH="{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$T/changes/foo/\\u0064esign.md\",\"content\":\"x\"}}"
++ESC_TOKEN='{"tool_name":"Write","tool_input":{"file_path":"a.md","content":"\u0067hp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij0123"}}'
++run "Unicode パス + パーサあり → block" 2 $A "$ESC_PATH"
++run "Unicode トークン + パーサあり → block" 2 $C "$ESC_TOKEN"
++run "Unicode パス + パーサ無し → block(理由表示)" 2 $A "$ESC_PATH" PATH="$NP"
++run "Unicode トークン + パーサ無し → block(理由表示)" 2 $C "$ESC_TOKEN" PATH="$NP"
++run "パーサ無し + Claude Write 無害な内容 → block(理由表示)" 2 $C '{"tool_name":"Write","tool_input":{"file_path":"a.md","content":"harmless"}}' PATH="$NP"
++# R-01: jq / python3 各経路の復号失敗と、空入力を両ゲートで検証する。
++JQ_ONLY="$T/jq-only"; PY_ONLY="$T/python-only"; mkdir -p "$JQ_ONLY" "$PY_ONLY"
++for b in bash grep sed cat dirname head printf env; do
++  p=$(command -v "$b") && ln -s "$p" "$JQ_ONLY/$b" && ln -s "$p" "$PY_ONLY/$b"
++done
++ln -s "$(command -v jq)" "$JQ_ONLY/jq"
++ln -s "$(command -v python3)" "$PY_ONLY/python3"
++for gate in "$A" "$C"; do
++  run "$gate: 不正 JSON(jq のみ) → block(理由表示)" 2 "$gate" '{invalid' PATH="$JQ_ONLY"
++  run "$gate: 不正 JSON(python3 のみ) → block(理由表示)" 2 "$gate" '{invalid' PATH="$PY_ONLY"
++  run "$gate: 空入力 → block(理由表示)" 2 "$gate" ''
++done
+ echo; echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]
