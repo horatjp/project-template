@@ -45,6 +45,12 @@ if ! command -v jq >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
   echo "シークレット検出: JSON を解析できません(jq または python3 が必要)。検査できないため書き込みをブロックします。" >&2
   exit 2
 fi
+# grep 自体が動くかを先に確かめる。bash 3.2 では実行権限の無い grep の 126 が `||` の先で 1 に見え、
+# 走査中は「不一致」と区別できないため(値に依存しない固定入力なのでこの影響を受けない)
+printf 'probe' | grep -E -e 'probe' >/dev/null 2>&1 || {
+  echo "シークレット検出: grep を実行できず検査できないため書き込みをブロックします。" >&2
+  exit 2
+}
 tool_name=$(json_get '.tool_name // empty' "d.get('tool_name','')")
 
 if [ "$tool_name" = "apply_patch" ]; then

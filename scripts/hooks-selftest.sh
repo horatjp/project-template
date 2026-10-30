@@ -82,12 +82,15 @@ for gate in "$A" "$C"; do
   run "$gate: 空入力 → block(理由表示)" 2 "$gate" ''
 done
 # R2-01: grep の不在・実行エラーを、パターン不一致と区別する。
-NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; mkdir -p "$NO_GREP" "$BAD_GREP"
+# R3-01: 実行権限の無い grep(bash 3.2 では `||` の先で $? が 126 でなく 1 に見え、不一致と区別できない)。
+NO_GREP="$T/no-grep"; BAD_GREP="$T/bad-grep"; NOEXEC_GREP="$T/noexec-grep"
+mkdir -p "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"
 for b in bash sed cat dirname env python3; do
-  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b"
+  p=$(command -v "$b") && ln -s "$p" "$NO_GREP/$b" && ln -s "$p" "$BAD_GREP/$b" && ln -s "$p" "$NOEXEC_GREP/$b"
 done
 printf '#!/bin/bash\nexit 2\n' > "$BAD_GREP/grep"; chmod +x "$BAD_GREP/grep"
-for grep_path in "$NO_GREP" "$BAD_GREP"; do
+printf '#!/bin/bash\nexit 1\n' > "$NOEXEC_GREP/grep"; chmod -x "$NOEXEC_GREP/grep"
+for grep_path in "$NO_GREP" "$BAD_GREP" "$NOEXEC_GREP"; do
   run "grep 異常($grep_path): Claude Write → block(理由表示)" 2 "$C" '{"tool_name":"Write","tool_input":{"content":"harmless"}}' PATH="$grep_path"
   run "grep 異常($grep_path): apply_patch → block(理由表示)" 2 "$C" "$(patch_json "$T" $'*** Begin Patch\n*** Add File: a.md\n+harmless\n*** End Patch')" PATH="$grep_path"
 done
