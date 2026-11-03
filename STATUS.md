@@ -19,7 +19,8 @@
 - 2026-11-03 ADR 執筆ガイドライン記事の取り込み: Fable・Astra 合意5件を両層 decisions/_template.md に反映(main 0aff97a)。
   完了・push 済み。出所: journal/2026-11-03.md
 - 2026-11-03 henteko「コードレビューをなくして見えたもの」から、proposal に「ユーザーの判断」節(原文記録)と承認発言の原文化を検討。
-  Fable・Astra は条件付き賛成(materials/2026-11-03-human-decisions/joint.md)。方向性のユーザー判断待ち・未実装
+  Fable・Astra は条件付き賛成(materials/2026-11-03-human-decisions/joint.md)。ユーザー承認で実装(main 0f42f7e)、
+  Astra レビュー P2=2 P3=1 → 修正後 0。完了・未 push
 
 ## 宿題(open)
 
