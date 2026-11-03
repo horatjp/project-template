@@ -16,6 +16,8 @@
 - 2026-10-09 multi-agent モジュールを削除(main 34cd66d・b9e263e)。完了
 - 2026-10-30 契約による設計・副作用の分離をリポジトリ層の規範に追加(main 0f515ef)。Fable・Astra の全体レビューで妥当と確認し、
   合意12件と追加指摘を修正(main 8a3cfa4・75b4960・7a4b877、Fable / Astra 再確認 P1=0 P2=0)。完了・push 済み
+- 2026-11-03 ADR 執筆ガイドライン記事の取り込み: Fable・Astra 合意5件を両層 decisions/_template.md に反映(main 0aff97a)。
+  完了・未 push。出所: journal/2026-11-03.md
 
 ## 宿題(open)
 
@@ -33,5 +35,5 @@
 
 ## 最終更新
 
-- 日付: 2026-10-30
+- 日付: 2026-11-03
 - 更新者: Claude Code
