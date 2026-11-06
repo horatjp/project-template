@@ -10,15 +10,17 @@ Claude Code は公式ドキュメント(code.claude.com)で確認した。
    承認の検査は `[x] ユーザー承認` の有無のみ(同 `:123`)。別々の呼び出しで「proposal に `[x]` → design」は両 CLI とも通り、
    雛形も AI が記入する前提(`templates/repo/changes/_template/proposal.md:53`)。ただし「ゲートの保証がゼロ」は広すぎる。
    正確には**「順序は強制するが、承認の出所は保証しない」**(同一パッチ内の記入拒否 `:109-115` は効いている)
-2. **Codex の `ask` は fail-open。** スキーマの enum にはあるが、出力パーサが `unsupported permissionDecision:ask` として invalid 扱いにし
+2. **Codex の `ask` は、参照した main のソースでは fail-open。** スキーマの enum にはあるが、出力パーサが `unsupported permissionDecision:ask` として invalid 扱いにし
    (`codex-rs/hooks/src/engine/output_parser.rs`)、`parse_completed` は Failed を記録するだけで `should_block=false` のまま
    (`codex-rs/hooks/src/events/pre_tool_use.rs`)。exit 0/2 以外・タイムアウト・未知フィールド入りの JSON も同じ。
    ローカル 0.166.0 のバイナリにも同じエラー文字列がある(文字列の存在は実行経路の実証ではない。実発火は未実施)。
-   → proposal の「Codex で効かなければ deny」は成立しない。**Codex に `ask` を出した時点で書き込みは通る。**
+   → proposal の「Codex で効かなければ deny」は成立しない。**参照した main のソースでは、この `ask` 自体は承認確認も停止も発生させない**
+   (他の hook や通常の権限判定による拒否は別。ローカル 0.166.0 の実発火は未確認)。
    `ask` を使うなら CLI を明示引数で判定し、不明なら deny。環境変数(`CLAUDE_PROJECT_DIR`)は codex スキルが Claude Code の
    セッション内から `codex exec` を起動するため判定に使えない
 3. **Claude Code の `ask` の形は確認できた**: stdout に `hookSpecificOutput.permissionDecision: "ask"` の JSON + exit 0。reason はプロンプトに表示、
-   `-p` で答える人がいなければ拒否(fail-closed)、auto モードでは分類器を経ず人間へ(https://code.claude.com/docs/en/hooks)。
+   `-p` で答える人がいなければ拒否(fail-closed)、auto モードでは分類器を経ず人間へ(保護パス等は分類器が先に拒否する例外あり。
+   https://code.claude.com/docs/en/hooks)。
    **要確認**: hook の `ask` の bypassPermissions / dontAsk での扱い(確認できたのは `permissions.ask` ルールの記述のみ)、
    exit 2 と stdout JSON を同じスクリプトで混ぜること(hooks-guide「choose one approach per hook」)。deny は全モードで止まる
 4. **2 を入れるなら `ask` ではなく deny のみの形(B 案)。** 編集ツールが `changes/*/proposal.md` に `[x] ユーザー承認` を新たに持ち込む操作を
