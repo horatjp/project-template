@@ -22,9 +22,8 @@
   Fable・Astra は条件付き賛成(materials/2026-11-03-human-decisions/joint.md)。ユーザー承認で実装(main 0f42f7e)、
   Astra レビュー P2=2 P3=1 → 修正後 0。完了・push 済み
 - 2026-11-03 architecture.md から PROJECT.md の構成欄にデータの流れ・境界を促す1文(main 52458ce)。完了・push 済み
-- 2026-11-06 freee の Lean 記事から、AI の自主性に頼る規則を棚卸しし、決定論の hook(`ask`)で強制する提案を作成
-  (materials/2026-11-06-deterministic-guardrails/proposal.md)。Fable・Astra レビュー済み(joint.md: 2 だけを deny のみの B 案で、条件付き)。
-  **ユーザー判断待ち**(承認欄の [x] をユーザーが書く運用・使い捨てリポジトリでの実発火検証・proposal の修正)
+- 2026-11-06 freee の Lean 記事から規則を棚卸しし、決定論の hook で強制する提案を作成。Fable・Astra のレビュー後、ユーザー判断で**見送り**
+  (materials/2026-11-06-deterministic-guardrails/。見直す条件: AI が自分で承認チェックを付けた事例を観測したら B 案を検討)
 
 ## 宿題(open)
 
