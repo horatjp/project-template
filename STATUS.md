@@ -23,7 +23,8 @@
   Astra レビュー P2=2 P3=1 → 修正後 0。完了・push 済み
 - 2026-11-03 architecture.md から PROJECT.md の構成欄にデータの流れ・境界を促す1文(main 52458ce)。完了・push 済み
 - 2026-11-06 freee の Lean 記事から、AI の自主性に頼る規則を棚卸しし、決定論の hook(`ask`)で強制する提案を作成
-  (materials/2026-11-06-deterministic-guardrails/proposal.md)。**ユーザー判断待ち**(昇格の時期・採る範囲・シェル経路・別AIレビューの有無)
+  (materials/2026-11-06-deterministic-guardrails/proposal.md)。Fable・Astra レビュー済み(joint.md: 2 だけを deny のみの B 案で、条件付き)。
+  **ユーザー判断待ち**(承認欄の [x] をユーザーが書く運用・使い捨てリポジトリでの実発火検証・proposal の修正)
 
 ## 宿題(open)
 
