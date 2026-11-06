@@ -40,6 +40,8 @@
     (2026-10-30 の修正は合成入力の selftest でのみ検証。出所: materials/2026-10-30-full-review/joint.md §5)
   - 2026-11-03 の追加(decisions の書かないもの・決めないこと、proposal の「ユーザーの判断」節と承認原文)が実執筆で守られるか、
     既存回答の聞き直し・AI の勝手な補完が減るかを見る(いずれも予防的追加で未観測。出所: journal/2026-11-03.md)
+  - AI が proposal の「[x] ユーザー承認」を自分で付けていないかを見る(観測したら learnings に記録し、B 案を検討する。
+    hook を足すときは、Codex の PreToolUse が `ask` を未対応として素通りさせる点に注意する。出所: materials/2026-11-06-deterministic-guardrails/joint.md)
 
 ## 最終更新
 
