@@ -29,9 +29,8 @@ README の手動手順を決定的に実行する。省略・順序変更をし�
    ```
    `user.name` / `user.email` 未設定で commit が失敗したら、勝手に設定せずユーザーに
    設定を依頼して再実行する
-4. **共有スキルの取り込み。** ワークスペースの `.agents/skills/` を一覧し、どれを
-   取り込むかユーザーに確認する(既定の提案: hearing・git-commit・codex・grill-me —
-   README「運用の要点」が前提にする4つ)。取り込む場合(ワークスペース直下で実行。
+4. **共有スキルの取り込み。** ワークスペースの `.agents/skills/` を、setup-repo を除いて全部取り込む
+   (要らないものをユーザーが言ったら外す)。取り込むとき(ワークスペース直下で実行。
    正典は `.agents/skills/`、Claude Code 用の入口は `.claude/skills/`):
    ```bash
    ln -s ../../../../.agents/skills/<skill> repos/<name>/.agents/skills/<skill>

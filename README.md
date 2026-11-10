@@ -127,8 +127,10 @@ git add -A && git commit -m "🎉 init: リポジトリ層テンプレートを�
 そこから docs/PROJECT.md と docs/STATUS.md を初期化して」と指示する。
 `docs/`・`changes/` 配下は原則AIが書き、人間はレビューと承認を行う。
 
-既存の `AGENTS.md` / `CLAUDE.md` があるリポジトリへ導入する場合は上書きせず、
-AIに両方を読ませて統合案を出させ、承認してから統合する。
+既存のリポジトリへ導入する場合は、`templates/repo/` のうち、まだ無いファイルを全部コピーする。
+既存の `AGENTS.md`・`CLAUDE.md`・`.claude/settings.json`・`.codex/hooks.json`・`.gitignore` は上書きしない。
+足す中身(hooks の項目・除外の行)の統合案を見せ、承認を得てから統合する。
+統合のあと、使う環境(Claude Code・Codex)ごとに、未承認の proposal の隣に `design.md` を書こうとして止められることと、認証情報の検査が動くことを、実際の Claude Code・Codex で確かめる(`scripts/hooks-selftest.sh` は台本だけの確認で、設定に登録されているかは分からない)。確かめられない環境や検査は未確認と書く。
 
 ワークスペース共有スキル(hearing 等)を `repos/` 配下で開くセッションでも使う場合は、
 リポジトリ側へ symlink して取り込む:
@@ -214,9 +216,9 @@ Claude Code の機構で Codex は読まないため、守らせたい規約は 
   書き漏れチェック・journal 反映・STATUS 更新をワンセットで行う)
 - 月1回程度「棚卸しして」と一声かける(`tanaoroshi` スキルが deprecated の整理・stale_after の見直し・
   今の運用を書いた記録と実物の照合・learnings の昇格候補・100行上限の点検を提案としてまとめる)
-- 複数エージェントを並列で走らせるときは git worktree でタスクごとに隔離する
-  (同一ワーキングディレクトリの同時編集は破綻する)。ワークスペース配下のリポジトリの
-  worktree は、そのワークスペースの `repos/` 直下(例: `repos/<name>-<task>`)に作る
+- 複数のエージェントが同じファイルを同時に書くときは git worktree で隔離する
+  (触るファイルを分けてあり、コミットする人が1人なら同じ場所でよい)。
+  worktree はワークスペースの `repos/` 直下(例: `repos/<name>-<task>`)に作る
 
 ## テンプレートの保守
 
