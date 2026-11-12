@@ -46,7 +46,7 @@
 | 技術的な決定・コードや技術の学び・変更スペック | 該当リポジトリの `docs/`・`changes/` |
 | `repos/` 配下の節目(実装完了・レビュー完了など) | `journal/` に1行(リポジトリ側の記録へリンク。詳細はリポジトリ側) |
 
-`docs/decisions/` の読み書きは各リポジトリと同じルール(OKF互換 frontmatter・stable=ユーザー承認済みを根拠に
+`docs/decisions/` の読み書きは各リポジトリと同じルール(OKF を部分採用した方言の frontmatter・stable=ユーザー承認済みを根拠に
 する・verified の自己検証禁止・deprecated と stale_after 超過は判断根拠にしない・不備があっても止めず報告)。
 `docs/` 直下の生きた文書(要件・関係者情報など)は frontmatter 不要で、上書き更新する。
 

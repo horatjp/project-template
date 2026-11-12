@@ -19,7 +19,7 @@ verified: []            # 空=未検証。書式: [{by: agent:<tool>@reviewer | 
 
 <!--
 ファイル名: YYYY-MM-DD-topic.md
-frontmatter は OKF(Open Knowledge Format)互換の方言(actor 表記と日付を簡略化)。運用ルール:
+frontmatter は OKF(Open Knowledge Format)を部分採用した方言(準拠はしない。差は README)。運用ルール:
 - 決定記録(技術決定の場合、いわゆるADR)は「なぜこう作られたか」の記録。
   AIはこれを知らないと理由ごと壊す。「何を決めたか」より「なぜそう決めたか」を丁寧に
 - 進捗・タスク・移行手順は changes/ と docs/STATUS.md へ、選択の理由に関係しない実装詳細(設定値・名前・手順)は

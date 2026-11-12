@@ -53,10 +53,14 @@ Google Cloud 発のオープン仕様)を部分採用した方言で、信頼シ
 - 本文を変更したら既存の `verified` は削除する(検証は失効する)
 - `stale_after`(鮮度期限)を超えた記録と `deprecated` は判断根拠にしない
 
-actor 表記(`agent:<tool>@<role>` / `human:<id>`)と日付(YYYY-MM-DD)は OKF を簡略化した
-方言で、厳密準拠が必要になれば機械変換できる粒度を保っている。
+OKF に準拠した形式ではない。actor 表記(`agent:<tool>@<role>` / `human:<id>`)と日付(YYYY-MM-DD)を
+簡略化しているほか、承認(`status: stable` の意味)と検証(本文変更で `verified` を消す・自己検証の禁止)は
+この方言独自の決まり。日付だけの値から時刻は作れず、役割名からモデルの版も戻せないため、
+厳密準拠への機械変換はできない。
 
-仕様: https://github.com/GoogleCloudPlatform/knowledge-catalog
+仕様の現在の置き場所: https://github.com/GoogleCloudPlatform/open-knowledge-format
+(2026-11-12 に、旧置き場所 GoogleCloudPlatform/knowledge-catalog の `okf/SPEC.md` の v0.2 と比べた。
+最新版との差は未確認)
 
 ## 構成
 
